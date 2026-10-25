@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facilitator View &middot; Community Resilience Exchange</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{
+  --bg:#0A0F1E;--panel:#111A30;--panel2:#16213C;--line:#243252;
+  --ink:#E6EDF7;--strong:#FFFFFF;--muted:#93A4BF;--faint:#7385A5;
+  --teal:#2DD4BF;--bridge:#FF6B35;--intro:#A78BFA;--done:#0F9D7A;
+  --radius:14px;--shadow:0 8px 30px rgba(0,0,0,.35);
+  --sans:"Segoe UI","Trebuchet MS",Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{background:radial-gradient(1100px 560px at 85% -10%,rgba(45,212,191,.08),transparent 60%),var(--bg);
+  color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px 80px}
+@media(max-width:560px){ .wrap{padding:0 14px 60px} }
+.pretend{background:repeating-linear-gradient(45deg,#3B2A08 0 14px,#503A0C 14px 28px);
+  border:1px solid #8a6a1f;border-radius:10px;color:#FFD980;font-weight:700;font-size:13px;
+  padding:10px 16px;margin:16px 0;text-align:center}
+header.app{display:flex;align-items:center;gap:16px;padding:18px 22px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
+.titleblock{flex:1 1 300px}
+.titleblock h1{margin:0;font-size:22px;font-weight:700;color:var(--strong)}
+.titleblock p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:80ch}
+.role-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;background:var(--teal);
+  color:#062A26;border-radius:6px;padding:5px 12px}
+section.block{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin:20px 0}
+@media(max-width:560px){ section.block{padding:16px} }
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--teal);font-weight:700;margin-bottom:6px}
+h2.block-title{margin:0 0 6px;font-size:18px;color:var(--strong);font-weight:700}
+h3.sub-title{margin:22px 0 4px;font-size:15px;color:var(--strong);font-weight:700}
+h3.sub-title:first-of-type{margin-top:14px}
+.lede{color:var(--muted);font-size:13px;margin:0 0 14px;max-width:90ch}
+
+.dash-panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin:20px 0}
+.dash-panel--health{border-color:rgba(45,212,191,.4)}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .v{font-size:24px;font-weight:700;color:var(--strong)}
+.stat .l{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin-top:2px}
+.stat .delta{font-size:11.5px;font-weight:700;margin-top:6px}
+.dash-panel--health .stat{border-top:2px solid var(--teal)}
+.snapshot-row{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.snapshot-row .note{margin:0;flex:1 1 240px}
+@media(max-width:560px){
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .stat-row .stat:last-child:nth-child(odd){grid-column:1 / -1}
+  .snapshot-row{flex-direction:column;align-items:stretch}
+  .snapshot-row .btn{width:100%;text-align:center}
+}
+
+.eco-layout{display:grid;grid-template-columns:1fr 320px;gap:18px;scroll-margin-top:12px}
+@media(max-width:960px){.eco-layout{grid-template-columns:1fr}}
+.map-shell{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative}
+.map-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+.chip{appearance:none;cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:700;border-radius:999px;
+  padding:7px 13px;min-height:34px;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);transition:.15s;white-space:nowrap}
+.chip:hover{border-color:var(--teal);color:var(--ink)}
+.chip.active{background:var(--teal);color:#062A26;border-color:var(--teal)}
+.chip.bridge-chip.active{background:var(--bridge);border-color:var(--bridge);color:#2b1408}
+.map-search{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:#fff;
+  font-family:var(--sans);font-size:12.5px;width:170px;min-height:34px}
+#ecoSvg{display:block;width:100%;height:600px;cursor:grab}
+@media(max-width:600px){ #ecoSvg{height:440px} }
+.eco-legend{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.lg{display:flex;align-items:center;gap:6px}
+.dotc{width:11px;height:11px;border-radius:50%;flex:none}
+.lg .ring{width:13px;height:13px;border-radius:50%;border:2.5px solid var(--bridge);flex:none}
+.lg .dash{width:20px;height:0;border-top:2.5px solid var(--teal);flex:none}
+.lg .dash.intro{border-top:2.5px dashed var(--intro)}
+.lg .dash.cross{border-top:2px solid var(--bridge)}
+.map-hint{font-size:11.5px;color:var(--faint);padding:0 14px 10px}
+.tooltip{position:absolute;pointer-events:none;background:#050A16;border:1px solid var(--line);border-radius:9px;
+  padding:9px 12px;font-size:12px;color:var(--ink);box-shadow:var(--shadow);max-width:260px;opacity:0;transition:opacity .1s;z-index:10}
+.tooltip b{color:#fff}.tooltip .tt-sub{color:var(--muted);font-size:11.5px}
+
+.profile{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;align-self:start;position:sticky;top:16px;
+  max-height:calc(100vh - 40px);overflow:auto;scroll-margin-top:16px}
+@media(max-width:960px){ .profile{position:static;max-height:none} }
+.profile .empty{color:var(--faint);font-size:13px;text-align:center;padding:30px 6px}
+.pf-name{font-size:17px;font-weight:700;color:#fff;margin:0 0 2px}
+.pf-sub{font-size:12px;color:var(--muted);margin:0 0 8px;overflow-wrap:anywhere}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:3px 8px;background:var(--line);color:var(--ink);white-space:nowrap}
+.pf-h{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--teal);font-weight:700;margin:14px 0 6px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.metric .v{font-size:16px;font-weight:700;color:#fff}
+.metric .l{font-size:10.5px;color:var(--muted);line-height:1.35}
+.pf-item{font-size:12px;color:var(--ink);padding-left:12px;position:relative;margin-bottom:4px}
+.pf-item::before{content:"";position:absolute;left:0;top:6px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+
+.card{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--bridge);border-radius:9px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+.card b{color:#fff}
+.card .who{color:var(--muted);font-size:11.5px}
+.card .badge{margin-left:6px}
+.match-line{font-size:12px;color:var(--ink);margin-top:4px}
+.match-line .k{color:var(--teal);font-weight:700}
+
+table.roster{width:100%;border-collapse:collapse;font-size:12.5px}
+table.roster th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+table.roster th:hover{color:var(--teal)}
+table.roster td{padding:8px 10px;border-bottom:1px solid rgba(36,50,82,.5);color:var(--ink);vertical-align:top}
+.td-sub{font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:400}
+table.roster tr:hover td{background:rgba(45,212,191,.04)}
+table.roster td.name{color:#fff;font-weight:600;cursor:pointer}
+table.roster td.name:hover{color:var(--teal)}
+.btn{appearance:none;cursor:pointer;font-family:var(--sans);font-weight:700;font-size:13px;border-radius:9px;
+  padding:9px 16px;min-height:38px;border:1px solid var(--line);background:transparent;color:var(--ink);transition:.15s;margin-right:8px}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.sm{padding:5px 11px;min-height:32px;font-size:11.5px;margin:8px 8px 0 0}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#062A26}
+.btn.primary:hover{filter:brightness(1.08);color:#062A26}
+.note{font-size:12px;color:var(--faint);font-style:italic;margin-top:10px}
+.si-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.si-why{font-size:12.5px;color:var(--ink);background:rgba(45,212,191,.06);border-left:2px solid var(--teal);padding:8px 10px;border-radius:0 6px 6px 0;margin:8px 0}
+.si-why b{color:var(--teal)}
+.si-actions{display:flex;gap:0;flex-wrap:wrap}
+.si-draft{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+.si-field{margin-bottom:10px}
+.si-field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.si-to{font-size:12.5px;color:var(--ink);overflow-wrap:anywhere}
+.si-subject,.si-bodytext{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:#fff;font-family:var(--sans);font-size:12.5px;resize:vertical}
+.field-label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.field{width:100%;padding:8px 10px;min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:#fff;font-family:var(--sans);font-size:12.5px}
+.intro-form{display:grid;grid-template-columns:1fr 1fr 170px auto;gap:8px;align-items:end;margin-bottom:8px;max-width:900px}
+@media(max-width:760px){ .intro-form{grid-template-columns:1fr} }
+.form-msg{font-size:12.5px;min-height:18px;margin:0 0 10px;color:var(--bridge)}
+.form-msg.ok{color:var(--teal)}
+.intro-summary{font-size:12.5px;color:var(--muted);margin:4px 0 10px}
+.date-input{color-scheme:dark}
+.date-input::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer;padding:3px;border-radius:4px}
+.footnote{color:var(--faint);font-size:12px;text-align:center;margin-top:28px}
+.chip.focus-chip{background:var(--intro);border-color:var(--intro);color:#1b1035}
+.ini-group{margin:18px 0 6px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ini-group h3{margin:0;font-size:15px;color:var(--strong)}
+.ini-group .why{font-size:12.5px;color:var(--muted)}
+.ini-card{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12.5px}
+.ini-card.first{border-left-color:#8B5CF6} .ini-card.ready{border-left-color:var(--teal)}
+.ini-card.unsure{border-left-color:#7385A5} .ini-card.moving{border-left-color:var(--done)}
+.ini-name{font-size:14.5px;font-weight:700;color:#fff;margin-right:4px}
+.ini-meta{color:var(--muted);font-size:11.5px;margin:2px 0 8px}
+.ini-row{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:4px 0;align-items:start}
+@media(max-width:560px){ .ini-row{grid-template-columns:1fr} }
+.ini-k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;padding-top:2px}
+.coal-bar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--line);max-width:260px;margin:3px 0 4px}
+.coal-bar span{display:block;height:100%}
+.ini-sugg{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0}
+.ini-sugg b{color:#fff}
+.stretch{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--bridge);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+.stretch b{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="pretend">Design demo. Every person, organization, and relationship is pretend, and nothing you do here is saved.</div>
+
+<header class="app">
+  <div class="titleblock">
+    <h1>Community Resilience Exchange</h1>
+    <p>For the exchange's facilitators. It shows the same information as the community exchange, plus how people connect. Use it to make introductions, spot gaps, and report on growth: stewardship, not surveillance.</p>
+  </div>
+  <span class="role-tag">Facilitator view</span>
+</header>
+
+<section class="dash-panel">
+  <div class="eyebrow">Activity</div>
+  <p class="lede" style="margin:0 0 14px">How much is happening on the exchange right now.</p>
+  <div class="stat-row" id="statRow"></div>
+</section>
+
+<section class="dash-panel dash-panel--health">
+  <div class="eyebrow">Network health</div>
+  <p class="lede" style="margin:0 0 14px">How well connected the network is, not just how busy. Each tile compares today with last week's snapshot.</p>
+  <div class="stat-row" id="healthRow"></div>
+  <div class="snapshot-row">
+    <button class="btn" style="margin:0" onclick="recordSnapshot()">Save a snapshot now</button>
+    <span class="note" id="snapshotNote">Earlier weeks here are pretend. In the full version a snapshot is saved automatically each week. Use this button to save one at a moment that matters, like right after a gathering.</span>
+  </div>
+</section>
+
+<div class="eco-layout">
+  <div class="map-shell">
+    <div class="map-toolbar">
+      <input class="map-search" id="ecoSearch" placeholder="Find a name" aria-label="Find a name on the map" oninput="ecoRefresh()">
+      <button class="chip active" id="chipCircle" onclick="setScene('circle')">Color by circle</button>
+      <button class="chip" id="chipRole" onclick="setScene('role')">Role in the network</button>
+      <button class="chip bridge-chip" id="chipBridges" onclick="setScene('bridges')">Ties across circles</button>
+      <button class="chip focus-chip" id="mapFocus" style="display:none" onclick="clearFocus()"></button>
+    </div>
+    <svg id="ecoSvg" role="img" aria-label="Network map of everyone on the exchange"></svg>
+    <div class="eco-legend" id="ecoLegend"></div>
+    <div class="map-hint" id="mapHint">Click anyone for their profile. Drag to move, scroll to zoom.</div>
+    <div class="tooltip" id="ecoTip"></div>
+  </div>
+  <div class="profile" id="profilePanel"><div class="empty">Click anyone on the map, or a name in the roster, to see their profile: how connected they are, what they bring, and what they've asked for.</div></div>
+</div>
+
+<section class="block" id="initiatives">
+  <div class="eyebrow">Initiatives</div>
+  <h2 class="block-title">What people are starting together</h2>
+  <p class="lede">Every initiative someone has told the exchange about, grouped by what it needs next. Some need a conversation before any introduction would help; others are ready for one. Each shows how firmly people have signed on and whether it has gone quiet.</p>
+  <div class="stat-row" id="iniStats"></div>
+  <div id="iniGroups"></div>
+  <h3 class="sub-title">Stretched thin</h3>
+  <p class="lede">People who lead, or are committed to or consulted on, three or more initiatives. They may be carrying a lot. Check in before adding another ask.</p>
+  <div id="iniStretched"></div>
+</section>
+
+<section class="block" id="whoToIntroduce">
+  <div class="eyebrow">Who to introduce</div>
+  <h2 class="block-title">Introductions worth making</h2>
+  <p class="lede">Three ways to find them: pairs whose requests and offers line up, requests nobody on the exchange can meet yet, and people with few ties so far. Nothing here is logged automatically; start an introduction when you decide to make one.</p>
+
+  <h3 class="sub-title">Suggested pairs</h3>
+  <div class="si-tabs" id="siTabs"></div>
+  <p class="lede" id="siStat" style="margin:0 0 12px"></p>
+  <div id="siList"></div>
+
+  <h3 class="sub-title">Requests with no good match yet</h3>
+  <p class="lede"><span id="gapCount"></span> Nothing posted on the exchange lines up well with these. Each is a chance for an introduction to someone you know, on or off the exchange, or a sign of something the community doesn't have yet. Matching compares words, so it misses some real fits; your own knowledge of people matters most here.</p>
+  <div id="gapList"></div>
+
+  <h3 class="sub-title">Least connected</h3>
+  <p class="lede">People with the fewest relationships on the map. They may be new, or their relationships may not be recorded yet. The map isn't the whole network, so treat this as a reason to reach out, never as a finding that someone is isolated.</p>
+  <div id="quietList"></div>
+</section>
+
+<section class="block" id="introSection">
+  <div class="eyebrow">Introductions</div>
+  <h2 class="block-title">Introductions you've made</h2>
+  <p class="lede">Record each introduction, whether it came from the suggestions above or from what you know about people. Then mark what came of it. Logged introductions show on the map as dashed lines and drop out of the suggestions.</p>
+  <div class="intro-form">
+    <div><label class="field-label" for="introA">Person or group</label><select id="introA" class="field"></select></div>
+    <div><label class="field-label" for="introB">Introduced to</label><select id="introB" class="field"></select></div>
+    <div><label class="field-label" for="introDate">Date</label>
+      <input id="introDate" type="date" class="field date-input" onclick="if(this.showPicker){ try{ this.showPicker(); }catch(e){} }"></div>
+    <button class="btn primary" style="margin:0" onclick="logIntro()">Log introduction</button>
+  </div>
+  <input id="introNote" class="field" placeholder="Optional note: why this introduction, or what you hope comes of it" style="max-width:900px;margin-bottom:8px">
+  <p class="form-msg" id="introMsg" role="status" aria-live="polite"></p>
+  <div class="intro-summary" id="introSummary"></div>
+  <div id="introList"></div>
+</section>
+
+<section class="block">
+  <div class="eyebrow">Commitments</div>
+  <h2 class="block-title">Who is helping whom</h2>
+  <p class="lede">Every "I can help" and "I'm interested" made on the community exchange. This is the clearest sign the network is doing something, not just existing. Each one shows on the map as a solid teal line.</p>
+  <div id="commitList"></div>
+</section>
+
+<section class="block">
+  <div class="eyebrow">Roster</div>
+  <h2 class="block-title">Everyone on the exchange</h2>
+  <p class="lede">Click a column to sort, or a name to open their profile. <b>Bridging</b> is high for people whose relationships link parts of the network that would otherwise be far apart. <b>Ties in own circle</b> is the share of someone's relationships that stay inside their own circle.</p>
+  <div style="overflow-x:auto"><table class="roster" id="rosterTable"></table></div>
+  <div style="margin-top:14px">
+    <button class="btn" onclick="exportCsv('nodes')">Download people CSV</button>
+    <button class="btn" onclick="exportCsv('links')">Download relationships CSV</button>
+    <button class="btn" onclick="exportCsv('commitments')">Download commitments CSV</button>
+    <button class="btn" onclick="exportCsv('intros')">Download introductions CSV</button>
+  </div>
+</section>
+
+<p class="footnote">Facilitator view &middot; same data as the community exchange &middot; pretend data throughout</p>
+</div>
+
+<script>
+const DATA = {"pretend":true,"taxonomy":[{"key":"relationships","label":"Community Relationships and Trust","blurb":"Connections to the people and groups who make up the community.","items":["Neighborhood association and resident group connections","Faith community connections","Youth and student engagement","Immigrant and newcomer community relationships","Elder and senior networks","Cultural and arts community relationships","Mutual aid and volunteer networks","Rural and agricultural community ties","Disability community relationships","Tribal and Indigenous community relationships"]},{"key":"economy","label":"Local Economy and Livelihoods","blurb":"Capacity to help people earn, build, and keep wealth locally.","items":["Small business coaching and support","Workforce development and job training","Cooperative and employee ownership experience","Local food systems and farm to market connections","Main street and commercial district revitalization","Entrepreneurship and startup mentoring","Financial coaching and household stability programs","Local hiring and procurement relationships","Creative economy and maker networks"]},{"key":"place","label":"Land, Space and Physical Assets","blurb":"Places, equipment, and infrastructure the community can use.","items":["Meeting and event space","Commercial kitchen or food processing space","Community land trust or shared ownership experience","Affordable housing development experience","Community gardens and growing space","Tools, equipment, or vehicle lending","Broadband and technology access points","Childcare or family friendly facilities"]},{"key":"capital","label":"Money and Capital","blurb":"Ways to bring resources into community work and move them around.","items":["Grant writing and fundraising capacity","Relationships with funders and philanthropy","Community lending and CDFI relationships","Fiscal sponsorship capacity","Participatory budgeting or community grantmaking experience","Crowdfunding and giving campaign experience","Public funding and government contract experience"]},{"key":"skills","label":"Skills and Organizational Capacity","blurb":"Expertise and infrastructure a person or organization can lend.","items":["Data, research, and mapping capacity","Training and facilitation capacity","Communications and storytelling capacity","Multilingual and in language capacity","Legal and regulatory expertise","Technology and digital tools support","Evaluation and learning capacity","Event and convening logistics","Volunteer coordination infrastructure"]}],"nodes":[{"id":"p00","name":"Millbrook Growers Cooperative","kind":"org","org_type":"Cooperative","town":"Millbrook","email":"millbrook.growers.cooper@example.org","phone":"(555) 010-0100","assets":["Local food systems and farm to market connections","Cooperative and employee ownership experience","Rural and agricultural community ties"],"needs":["Looking for help setting up online sales and delivery logistics for our farm boxes."],"offers":[],"grantee":true,"degree":4,"betweenness":0.0329,"cluster":4,"bridge":false,"engaging":0.5},{"id":"p01","name":"Alder County Food Pantry Network","kind":"org","org_type":"Nonprofit","town":"Millbrook","email":"alder.county.food.pantry@example.org","phone":"(555) 010-0101","assets":["Mutual aid and volunteer networks","Volunteer coordination infrastructure","Local food systems and farm to market connections"],"needs":["We need refrigerated storage space or a partner with cold chain capacity."],"offers":[],"grantee":false,"degree":5,"betweenness":0.1108,"cluster":2,"bridge":true,"engaging":0.4},{"id":"p02","name":"Harvest Table Community Kitchen","kind":"org","org_type":"Nonprofit","town":"Harper's Bend","email":"harvest.table.community@example.org","phone":"(555) 010-0102","assets":["Commercial kitchen or food processing space","Workforce development and job training"],"needs":["Seeking a grant writer to help us apply for a state workforce training grant."],"offers":[],"grantee":true,"degree":4,"betweenness":0.039,"cluster":4,"bridge":false,"engaging":0.75},{"id":"p03","name":"Rosa Delgado","kind":"person","org_type":"Farmer and market organizer","town":"Millbrook","email":"rosa.delgado@example.org","phone":"(555) 010-0103","assets":["Local food systems and farm to market connections","Immigrant and newcomer community relationships","Multilingual and in language capacity"],"needs":["I want a partner to help start a Spanish language business workshop series for farm families."],"offers":[],"grantee":false,"degree":4,"betweenness":0.0295,"cluster":3,"bridge":false,"engaging":0.25},{"id":"p04","name":"Sam Whitfield","kind":"person","org_type":"Rancher","town":"Harper's Bend","email":"sam.whitfield@example.org","phone":"(555) 010-0104","assets":["Rural and agricultural community ties","Tools, equipment, or vehicle lending"],"needs":["Need help understanding conservation easements and land succession planning."],"offers":["My flatbed trailer is available for borrowing most weekends. Just bring it back with the straps."],"grantee":false,"degree":5,"betweenness":0.07,"cluster":4,"bridge":true,"engaging":0.6},{"id":"p05","name":"Cedar Flats Community Garden Alliance","kind":"org","org_type":"Volunteer group","town":"Cedar Flats","email":"cedar.flats.community.ga@example.org","phone":"(555) 010-0105","assets":["Community gardens and growing space","Mutual aid and volunteer networks"],"needs":["Our tool shed burned down. Looking for tool donations or a lending partnership."],"offers":[],"grantee":true,"degree":2,"betweenness":0.007,"cluster":2,"bridge":false,"engaging":1.0},{"id":"p06","name":"Marta Kovacs","kind":"person","org_type":"Extension educator","town":"Millbrook","email":"marta.kovacs@example.org","phone":"(555) 010-0106","assets":["Training and facilitation capacity","Rural and agricultural community ties","Data, research, and mapping capacity"],"needs":["Looking for community partners to co-host food preservation classes."],"offers":["Happy to co-teach food preservation classes with any community group. I bring the canning equipment."],"grantee":false,"degree":5,"betweenness":0.0573,"cluster":4,"bridge":false,"engaging":0.6},{"id":"p07","name":"Riverbend Farm to School Project","kind":"org","org_type":"Nonprofit","town":"Millbrook","email":"riverbend.farm.to.school@example.org","phone":"(555) 010-0107","assets":["Youth and student engagement","Local food systems and farm to market connections"],"needs":["We need a van or shared transportation for weekly school deliveries."],"offers":[],"grantee":true,"degree":4,"betweenness":0.0092,"cluster":4,"bridge":false,"engaging":0.75},{"id":"p08","name":"Alderton Main Street Partnership","kind":"org","org_type":"Business association","town":"Alderton","email":"alderton.main.street.par@example.org","phone":"(555) 010-0108","assets":["Main street and commercial district revitalization","Local hiring and procurement relationships","Event and convening logistics"],"needs":["Seeking artists and makers to fill three vacant storefronts with pop up shops."],"offers":[],"grantee":true,"degree":3,"betweenness":0.0374,"cluster":0,"bridge":false,"engaging":0.67},{"id":"p09","name":"Alder County Small Business Center","kind":"org","org_type":"Public agency","town":"Alderton","email":"alder.county.small.busin@example.org","phone":"(555) 010-0109","assets":["Small business coaching and support","Entrepreneurship and startup mentoring","Financial coaching and household stability programs"],"needs":["We want to reach immigrant entrepreneurs and need trusted community messengers."],"offers":[],"grantee":false,"degree":5,"betweenness":0.0296,"cluster":0,"bridge":false,"engaging":0.8},{"id":"p10","name":"Denise Okafor","kind":"person","org_type":"Bakery owner","town":"Alderton","email":"denise.okafor@example.org","phone":"(555) 010-0110","assets":["Entrepreneurship and startup mentoring","Creative economy and maker networks"],"needs":["Looking for commercial kitchen space to expand wholesale production."],"offers":[],"grantee":false,"degree":4,"betweenness":0.0334,"cluster":0,"bridge":false,"engaging":0.75},{"id":"p11","name":"Ray Calloway","kind":"person","org_type":"Barber and community connector","town":"Alderton","email":"ray.calloway@example.org","phone":"(555) 010-0111","assets":["Neighborhood association and resident group connections","Youth and student engagement"],"needs":["Want help starting a youth apprenticeship program in the trades."],"offers":[],"grantee":false,"degree":5,"betweenness":0.057,"cluster":0,"bridge":false,"engaging":0.6},{"id":"p12","name":"Makers of Alder County","kind":"org","org_type":"Volunteer group","town":"Alderton","email":"makers.of.alder.county@example.org","phone":"(555) 010-0112","assets":["Creative economy and maker networks","Tools, equipment, or vehicle lending"],"needs":["Seeking a permanent shared workshop space with room for classes."],"offers":["Tool lending for members: ladders, saws, a cement mixer, and a very loved pickup truck."],"grantee":false,"degree":3,"betweenness":0.0083,"cluster":0,"bridge":false,"engaging":1.0},{"id":"p13","name":"Priya Raman","kind":"person","org_type":"Accountant","town":"Alderton","email":"priya.raman@example.org","phone":"(555) 010-0113","assets":["Financial coaching and household stability programs","Small business coaching and support"],"needs":["I can volunteer four hours a month and want to be matched with new business owners."],"offers":["I can give four hours a month of free bookkeeping help to a new business owner. First come, first served."],"grantee":false,"degree":2,"betweenness":0.0053,"cluster":0,"bridge":false,"engaging":1.0},{"id":"p14","name":"Harper's Bend Chamber of Commerce","kind":"org","org_type":"Business association","town":"Harper's Bend","email":"harpers.bend.chamber.of@example.org","phone":"(555) 010-0114","assets":["Local hiring and procurement relationships","Event and convening logistics"],"needs":["Our downtown lacks broadband. Looking for partners on a connectivity grant."],"offers":[],"grantee":false,"degree":5,"betweenness":0.0674,"cluster":0,"bridge":false,"engaging":0.6},{"id":"p15","name":"Tom Nguyen","kind":"person","org_type":"Restaurant owner","town":"Alderton","email":"tom.nguyen@example.org","phone":"(555) 010-0115","assets":["Local food systems and farm to market connections","Immigrant and newcomer community relationships"],"needs":["Want to source more from local farms but need help with ordering logistics."],"offers":[],"grantee":false,"degree":6,"betweenness":0.0566,"cluster":0,"bridge":false,"engaging":0.67},{"id":"p16","name":"Alder County Housing Trust","kind":"org","org_type":"Nonprofit","town":"Alderton","email":"alder.county.housing.tru@example.org","phone":"(555) 010-0116","assets":["Affordable housing development experience","Community land trust or shared ownership experience","Public funding and government contract experience"],"needs":["Seeking resident leaders to serve on our community advisory board."],"offers":[],"grantee":true,"degree":4,"betweenness":0.0469,"cluster":1,"bridge":false,"engaging":0.75},{"id":"p17","name":"Cedar Flats Tenants Union","kind":"org","org_type":"Volunteer group","town":"Cedar Flats","email":"cedar.flats.tenants.unio@example.org","phone":"(555) 010-0117","assets":["Neighborhood association and resident group connections","Mutual aid and volunteer networks"],"needs":["We need legal expertise on tenant protections and a place to hold meetings."],"offers":[],"grantee":false,"degree":5,"betweenness":0.0349,"cluster":1,"bridge":false,"engaging":0.8},{"id":"p18","name":"Gloria Standing Bear","kind":"person","org_type":"Housing advocate","town":"Cedar Flats","email":"gloria.standing.bear@example.org","phone":"(555) 010-0118","assets":["Tribal and Indigenous community relationships","Affordable housing development experience"],"needs":["Looking for data help to document overcrowding for a county housing report."],"offers":[],"grantee":false,"degree":4,"betweenness":0.0229,"cluster":1,"bridge":false,"engaging":0.75},{"id":"p19","name":"Alderton Habitat Chapter","kind":"org","org_type":"Nonprofit","town":"Alderton","email":"alderton.habitat.chapter@example.org","phone":"(555) 010-0119","assets":["Volunteer coordination infrastructure","Affordable housing development experience"],"needs":["Need skilled trades volunteers for two spring builds."],"offers":[],"grantee":false,"degree":2,"betweenness":0.0033,"cluster":1,"bridge":false,"engaging":0.5},{"id":"p20","name":"Frank Osei","kind":"person","org_type":"Retired planner","town":"Alderton","email":"frank.osei@example.org","phone":"(555) 010-0120","assets":["Legal and regulatory expertise","Data, research, and mapping capacity"],"needs":["Happy to advise groups on zoning and permits. Looking for groups who need it."],"offers":["Retired planner offering free advice on zoning, permits, and site plans. Coffee on you."],"grantee":false,"degree":4,"betweenness":0.012,"cluster":1,"bridge":false,"engaging":0.75},{"id":"p21","name":"Cedar Flats Community Land Trust","kind":"org","org_type":"Nonprofit","town":"Cedar Flats","email":"cedar.flats.community.la@example.org","phone":"(555) 010-0121","assets":["Community land trust or shared ownership experience","Community gardens and growing space"],"needs":["Seeking a fiscal sponsor while our nonprofit status is pending."],"offers":[],"grantee":false,"degree":3,"betweenness":0.0328,"cluster":1,"bridge":false,"engaging":0.67},{"id":"p22","name":"Janet Morrow","kind":"person","org_type":"Realtor","town":"Cedar Flats","email":"janet.morrow@example.org","phone":"(555) 010-0122","assets":["Relationships with funders and philanthropy","Main street and commercial district revitalization"],"needs":["Want to organize a landlord roundtable on accepting housing vouchers."],"offers":[],"grantee":false,"degree":4,"betweenness":0.018,"cluster":1,"bridge":false,"engaging":1.0},{"id":"p23","name":"Alder Interfaith Housing Coalition","kind":"org","org_type":"Faith coalition","town":"Alderton","email":"alder.interfaith.housing@example.org","phone":"(555) 010-0123","assets":["Faith community connections","Meeting and event space","Mutual aid and volunteer networks"],"needs":["Our congregations can host but we need a coordinator for a rotating shelter program."],"offers":["Our fellowship hall seats 120 and is free for community meetings on weeknights."],"grantee":false,"degree":3,"betweenness":0.0349,"cluster":1,"bridge":false,"engaging":0.67},{"id":"p24","name":"Cedar Flats Youth Collective","kind":"org","org_type":"Nonprofit","town":"Cedar Flats","email":"cedar.flats.youth.collec@example.org","phone":"(555) 010-0124","assets":["Youth and student engagement","Cultural and arts community relationships"],"needs":["Looking for paid internship placements with local employers for ten teens."],"offers":[],"grantee":true,"degree":7,"betweenness":0.136,"cluster":3,"bridge":true,"engaging":0.57},{"id":"p25","name":"Alder County Library Friends","kind":"org","org_type":"Volunteer group","town":"Alderton","email":"alder.county.library.fri@example.org","phone":"(555) 010-0125","assets":["Meeting and event space","Broadband and technology access points","Technology and digital tools support"],"needs":["Seeking volunteers to teach digital skills classes for seniors."],"offers":["Free meeting room at the library, evenings and Saturdays. Projector included. Book a slot with us."],"grantee":false,"degree":3,"betweenness":0.0271,"cluster":3,"bridge":false,"engaging":0.67},{"id":"p26","name":"Miguel Santos","kind":"person","org_type":"Muralist and teaching artist","town":"Cedar Flats","email":"miguel.santos@example.org","phone":"(555) 010-0126","assets":["Cultural and arts community relationships","Youth and student engagement","Creative economy and maker networks"],"needs":["Looking for wall space and sponsors for a youth mural apprenticeship."],"offers":[],"grantee":false,"degree":4,"betweenness":0.036,"cluster":0,"bridge":false,"engaging":0.5},{"id":"p27","name":"Alderton Adult Learning Center","kind":"org","org_type":"Nonprofit","town":"Alderton","email":"alderton.adult.learning@example.org","phone":"(555) 010-0127","assets":["Workforce development and job training","Multilingual and in language capacity","Training and facilitation capacity"],"needs":["We need employer partners willing to interview our program graduates."],"offers":[],"grantee":true,"degree":5,"betweenness":0.0396,"cluster":3,"bridge":false,"engaging":0.6},{"id":"p28","name":"Aisha Bell","kind":"person","org_type":"School counselor","town":"Cedar Flats","email":"aisha.bell@example.org","phone":"(555) 010-0128","assets":["Youth and student engagement","Elder and senior networks"],"needs":["Want to start an intergenerational mentoring program and need elder volunteers."],"offers":[],"grantee":false,"degree":3,"betweenness":0.0111,"cluster":3,"bridge":false,"engaging":1.0},{"id":"p29","name":"Harper's Bend Historical Society","kind":"org","org_type":"Nonprofit","town":"Harper's Bend","email":"harpers.bend.historical@example.org","phone":"(555) 010-0129","assets":["Cultural and arts community relationships","Meeting and event space","Elder and senior networks"],"needs":["Seeking help digitizing our oral history collection."],"offers":[],"grantee":true,"degree":5,"betweenness":0.0234,"cluster":3,"bridge":false,"engaging":0.8},{"id":"p30","name":"Jordan Pike","kind":"person","org_type":"Radio host","town":"Harper's Bend","email":"jordan.pike@example.org","phone":"(555) 010-0130","assets":["Communications and storytelling capacity","Elder and senior networks"],"needs":["Looking for community stories to feature. Pitch me your project."],"offers":["Free radio airtime for community announcements every Thursday morning. Call me with yours."],"grantee":false,"degree":4,"betweenness":0.0587,"cluster":4,"bridge":false,"engaging":0.25},{"id":"p31","name":"Somali Community Association of Alder County","kind":"org","org_type":"Nonprofit","town":"Alderton","email":"somali.community.associa@example.org","phone":"(555) 010-0131","assets":["Immigrant and newcomer community relationships","Multilingual and in language capacity","Mutual aid and volunteer networks"],"needs":["We want a partner to co-design a culturally rooted childcare cooperative."],"offers":[],"grantee":true,"degree":4,"betweenness":0.0205,"cluster":3,"bridge":false,"engaging":1.0},{"id":"p32","name":"Alder Community Foundation","kind":"org","org_type":"Funder","town":"Alderton","email":"alder.community.foundati@example.org","phone":"(555) 010-0132","assets":["Relationships with funders and philanthropy","Participatory budgeting or community grantmaking experience","Grant writing and fundraising capacity"],"needs":["Looking for resident reviewers for our new community grants committee."],"offers":[],"grantee":false,"degree":7,"betweenness":0.1968,"cluster":2,"bridge":true,"engaging":0.43},{"id":"p33","name":"Alder County Economic Development Office","kind":"org","org_type":"Public agency","town":"Alderton","email":"alder.county.economic.de@example.org","phone":"(555) 010-0133","assets":["Public funding and government contract experience","Data, research, and mapping capacity","Local hiring and procurement relationships"],"needs":["Seeking community input sites for our five year economic strategy."],"offers":[],"grantee":false,"degree":4,"betweenness":0.0435,"cluster":2,"bridge":false,"engaging":0.75},{"id":"p34","name":"Cascade Community Credit Union","kind":"org","org_type":"CDFI","town":"Alderton","email":"cascade.community.credit@example.org","phone":"(555) 010-0134","assets":["Community lending and CDFI relationships","Financial coaching and household stability programs"],"needs":["We want community partners to host lending circles in three towns."],"offers":[],"grantee":false,"degree":5,"betweenness":0.0757,"cluster":2,"bridge":true,"engaging":0.6},{"id":"p35","name":"Helen Zhao","kind":"person","org_type":"Grant consultant","town":"Cedar Flats","email":"helen.zhao@example.org","phone":"(555) 010-0135","assets":["Grant writing and fundraising capacity","Evaluation and learning capacity"],"needs":["Offering two pro bono grant applications this year for small groups."],"offers":["Offering two free grant applications this year for small groups without a grant writer. Come talk to me."],"grantee":false,"degree":4,"betweenness":0.0775,"cluster":4,"bridge":true,"engaging":0.25},{"id":"p36","name":"Alder Rural Capacity Partners","kind":"org","org_type":"Nonprofit","town":"Millbrook","email":"alder.rural.capacity.par@example.org","phone":"(555) 010-0136","assets":["Training and facilitation capacity","Evaluation and learning capacity","Fiscal sponsorship capacity"],"needs":["Looking for groups that need fiscal sponsorship or board training."],"offers":[],"grantee":false,"degree":4,"betweenness":0.0325,"cluster":2,"bridge":false,"engaging":0.75},{"id":"p37","name":"Dave Lindqvist","kind":"person","org_type":"County commissioner","town":"Harper's Bend","email":"dave.lindqvist@example.org","phone":"(555) 010-0137","assets":["Public funding and government contract experience","Rural and agricultural community ties"],"needs":["Want a community scorecard on broadband access to bring to the state."],"offers":[],"grantee":false,"degree":6,"betweenness":0.0951,"cluster":2,"bridge":true,"engaging":0.67},{"id":"p38","name":"United Way of Alder County","kind":"org","org_type":"Nonprofit","town":"Alderton","email":"united.way.of.alder.coun@example.org","phone":"(555) 010-0138","assets":["Volunteer coordination infrastructure","Relationships with funders and philanthropy","Communications and storytelling capacity"],"needs":["Recruiting workplace giving ambassadors at local employers."],"offers":[],"grantee":false,"degree":5,"betweenness":0.0695,"cluster":2,"bridge":true,"engaging":0.8},{"id":"p39","name":"Nina Petrov","kind":"person","org_type":"Data analyst and volunteer","town":"Alderton","email":"nina.petrov@example.org","phone":"(555) 010-0139","assets":["Data, research, and mapping capacity","Technology and digital tools support"],"needs":["I can build dashboards for community groups. Looking for a first project."],"offers":["I will build a free dashboard or map for one community group this fall. Looking for my first project."],"grantee":false,"degree":3,"betweenness":0.0429,"cluster":3,"bridge":false,"engaging":0.33}],"links":[{"source":"p02","target":"p06","cross_cluster":false,"kind":"existing"},{"source":"p16","target":"p17","cross_cluster":false,"kind":"existing"},{"source":"p35","target":"p37","cross_cluster":true,"kind":"existing"},{"source":"p19","target":"p38","cross_cluster":true,"kind":"existing"},{"source":"p02","target":"p04","cross_cluster":false,"kind":"existing"},{"source":"p25","target":"p39","cross_cluster":false,"kind":"existing"},{"source":"p16","target":"p20","cross_cluster":false,"kind":"existing"},{"source":"p27","target":"p31","cross_cluster":false,"kind":"existing"},{"source":"p10","target":"p14","cross_cluster":false,"kind":"existing"},{"source":"p32","target":"p39","cross_cluster":true,"kind":"existing"},{"source":"p17","target":"p19","cross_cluster":false,"kind":"existing"},{"source":"p18","target":"p39","cross_cluster":true,"kind":"existing"},{"source":"p08","target":"p32","cross_cluster":true,"kind":"existing"},{"source":"p01","target":"p04","cross_cluster":true,"kind":"existing"},{"source":"p09","target":"p14","cross_cluster":false,"kind":"existing"},{"source":"p21","target":"p35","cross_cluster":true,"kind":"existing"},{"source":"p28","target":"p29","cross_cluster":false,"kind":"existing"},{"source":"p16","target":"p22","cross_cluster":false,"kind":"existing"},{"source":"p05","target":"p36","cross_cluster":false,"kind":"existing"},{"source":"p24","target":"p32","cross_cluster":true,"kind":"existing"},{"source":"p09","target":"p12","cross_cluster":false,"kind":"existing"},{"source":"p03","target":"p04","cross_cluster":true,"kind":"existing"},{"source":"p08","target":"p26","cross_cluster":false,"kind":"existing"},{"source":"p16","target":"p32","cross_cluster":true,"kind":"existing"},{"source":"p00","target":"p15","cross_cluster":true,"kind":"existing"},{"source":"p12","target":"p15","cross_cluster":false,"kind":"existing"},{"source":"p24","target":"p29","cross_cluster":false,"kind":"existing"},{"source":"p01","target":"p23","cross_cluster":true,"kind":"existing"},{"source":"p17","target":"p36","cross_cluster":true,"kind":"existing"},{"source":"p34","target":"p37","cross_cluster":false,"kind":"existing"},{"source":"p32","target":"p34","cross_cluster":false,"kind":"existing"},{"source":"p04","target":"p30","cross_cluster":false,"kind":"existing"},{"source":"p01","target":"p06","cross_cluster":true,"kind":"existing"},{"source":"p11","target":"p15","cross_cluster":false,"kind":"existing"},{"source":"p33","target":"p37","cross_cluster":false,"kind":"existing"},{"source":"p06","target":"p07","cross_cluster":false,"kind":"existing"},{"source":"p03","target":"p07","cross_cluster":true,"kind":"existing"},{"source":"p03","target":"p09","cross_cluster":true,"kind":"existing"},{"source":"p25","target":"p28","cross_cluster":false,"kind":"existing"},{"source":"p32","target":"p38","cross_cluster":false,"kind":"existing"},{"source":"p11","target":"p24","cross_cluster":true,"kind":"existing"},{"source":"p17","target":"p21","cross_cluster":false,"kind":"existing"},{"source":"p24","target":"p31","cross_cluster":false,"kind":"existing"},{"source":"p01","target":"p38","cross_cluster":false,"kind":"existing"},{"source":"p26","target":"p29","cross_cluster":true,"kind":"existing"},{"source":"p24","target":"p35","cross_cluster":true,"kind":"existing"},{"source":"p08","target":"p11","cross_cluster":false,"kind":"existing"},{"source":"p01","target":"p05","cross_cluster":false,"kind":"existing"},{"source":"p06","target":"p27","cross_cluster":true,"kind":"existing"},{"source":"p26","target":"p30","cross_cluster":true,"kind":"existing"},{"source":"p09","target":"p15","cross_cluster":false,"kind":"existing"},{"source":"p18","target":"p21","cross_cluster":false,"kind":"existing"},{"source":"p22","target":"p23","cross_cluster":false,"kind":"existing"},{"source":"p14","target":"p30","cross_cluster":true,"kind":"existing"},{"source":"p17","target":"p23","cross_cluster":false,"kind":"existing"},{"source":"p00","target":"p06","cross_cluster":false,"kind":"existing"},{"source":"p00","target":"p34","cross_cluster":true,"kind":"existing"},{"source":"p37","target":"p38","cross_cluster":false,"kind":"existing"},{"source":"p32","target":"p33","cross_cluster":false,"kind":"existing"},{"source":"p29","target":"p31","cross_cluster":false,"kind":"existing"},{"source":"p18","target":"p20","cross_cluster":false,"kind":"existing"},{"source":"p02","target":"p15","cross_cluster":true,"kind":"existing"},{"source":"p20","target":"p22","cross_cluster":false,"kind":"existing"},{"source":"p10","target":"p34","cross_cluster":true,"kind":"existing"},{"source":"p02","target":"p35","cross_cluster":false,"kind":"existing"},{"source":"p33","target":"p36","cross_cluster":false,"kind":"existing"},{"source":"p04","target":"p07","cross_cluster":false,"kind":"existing"},{"source":"p11","target":"p27","cross_cluster":true,"kind":"existing"},{"source":"p10","target":"p13","cross_cluster":false,"kind":"existing"},{"source":"p11","target":"p13","cross_cluster":false,"kind":"existing"},{"source":"p24","target":"p27","cross_cluster":false,"kind":"existing"},{"source":"p18","target":"p22","cross_cluster":false,"kind":"existing"},{"source":"p00","target":"p07","cross_cluster":false,"kind":"existing"},{"source":"p14","target":"p37","cross_cluster":true,"kind":"existing"},{"source":"p34","target":"p38","cross_cluster":false,"kind":"existing"},{"source":"p09","target":"p10","cross_cluster":false,"kind":"existing"},{"source":"p36","target":"p37","cross_cluster":false,"kind":"existing"},{"source":"p27","target":"p29","cross_cluster":false,"kind":"existing"},{"source":"p12","target":"p26","cross_cluster":false,"kind":"existing"},{"source":"p24","target":"p28","cross_cluster":false,"kind":"existing"},{"source":"p25","target":"p30","cross_cluster":true,"kind":"existing"},{"source":"p20","target":"p33","cross_cluster":true,"kind":"existing"},{"source":"p03","target":"p31","cross_cluster":false,"kind":"existing"},{"source":"p14","target":"p15","cross_cluster":false,"kind":"existing"}],"clusters":[{"id":0,"size":9,"top_cats":["economy","relationships"],"top_town":"Alderton"},{"id":1,"size":8,"top_cats":["place","relationships"],"top_town":"Cedar Flats"},{"id":2,"size":8,"top_cats":["capital","skills"],"top_town":"Alderton"},{"id":3,"size":8,"top_cats":["relationships","skills"],"top_town":"Alderton"},{"id":4,"size":7,"top_cats":["relationships","skills"],"top_town":"Harper's Bend"}],"commitments":[{"helper":"p15","helped":"p00","need":"Looking for help setting up online sales and delivery logistics for our farm boxes.","status":"active","date":"2026-07-02"},{"helper":"p35","helped":"p02","need":"Seeking a grant writer to help us apply for a state workforce training grant.","status":"done","date":"2026-06-18"},{"helper":"p32","helped":"p24","need":"Looking for paid internship placements with local employers for ten teens.","status":"active","date":"2026-07-20"},{"helper":"p38","helped":"p01","need":"We need refrigerated storage space or a partner with cold chain capacity.","status":"active","date":"2026-07-25"},{"helper":"p34","helped":"p10","need":"Looking for commercial kitchen space to expand wholesale production.","status":"done","date":"2026-06-30"}]};
+const CIRCLE_COLORS = ["#0D9488","#D97706","#2563EB","#E11D48","#9333EA"];
+const BRIDGE = "#FF6B35", INTRO = "#A78BFA", TEAL = "#2DD4BF", DONE = "#0F9D7A";
+
+let nodes = DATA.nodes.map(d => Object.assign({}, d, {needs: (d.needs||[]).slice(), offers: (d.offers||[]).slice()}));
+let links = DATA.links.map(d => Object.assign({}, d));
+let commitments = (DATA.commitments || []).map(c => Object.assign({}, c));
+let introductions = [];
+let scene = "circle";
+let focusIds = null; // people highlighted on the map, e.g. one initiative
+let sortKey = "name", sortAsc = true;
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function assetText(a){ return (a && typeof a === "object") ? a.item : a; }
+function assetDetail(a){ return (a && typeof a === "object") ? (a.detail || "") : ""; }
+function assetSearchText(a){ const d = assetDetail(a); return d ? assetText(a) + " " + d : assetText(a); }
+function byId(id){ return nodes.find(n => n.id === id); }
+function firstName(n){ return n.kind === "person" ? n.name.split(" ")[0] : n.name; }
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function niceDate(iso){
+  if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
+  return MONTHS[Number(iso.slice(5,7)) - 1] + " " + Number(iso.slice(8)) + ", " + iso.slice(0,4);
+}
+
+// ---------- Data clean-up ----------
+// Rule 1 of the data model: a post is a request or an offer, never both. These four
+// were posted twice, once as an offer and once more as a "request" that is really the
+// same offer. Dropping the duplicates keeps them out of the request counts and out of
+// "Requests with no good match yet". In the full version a facilitator confirms each
+// move once, when it is spotted.
+const DUPLICATE_OFFERS_POSTED_AS_REQUESTS = [
+  "I can volunteer four hours a month", "Happy to advise groups on zoning",
+  "Offering two pro bono grant applications", "I can build dashboards for community groups"
+];
+nodes.forEach(n => { n.needs = n.needs.filter(t => !DUPLICATE_OFFERS_POSTED_AS_REQUESTS.some(p => t.startsWith(p))); });
+
+// ---------- Circles ----------
+const CIRCLE_NAMES = {0:"Local business and jobs", 1:"Housing and land", 2:"Funding and capacity",
+  3:"Learning, culture and belonging", 4:"Food and farming"};
+function circleName(ci){ return CIRCLE_NAMES[ci] || "Circle " + (ci + 1); }
+function circleColor(ci){ return CIRCLE_COLORS[ci % CIRCLE_COLORS.length]; }
+const CIRCLE_COUNT = 1 + Math.max(...nodes.map(d => d.cluster));
+
+// ---------- Plain-language measures ----------
+const ROLE_COLOR = {connector:"#FF6B35", explorer:"#2F6FCE", quiet:"#5A6B8C", steady:"#2DD4BF"};
+const ROLE_SHORT = {connector:"Connector", explorer:"Reaches out", quiet:"Few ties so far", steady:"Close-knit"};
+const ROLE_LABEL = {connector:"Connector: links circles together",
+  explorer:"Reaches out: most ties go to other circles", quiet:"Few ties so far",
+  steady:"Close-knit: most ties are inside their own circle"};
+function roleOf(d){
+  if(d.bridge) return "connector";
+  if(d.degree <= 2) return "quiet";
+  if(d.engaging < 0.45) return "explorer";
+  return "steady";
+}
+const DEG_SORTED = nodes.map(n => n.degree).sort((a,b) => a-b);
+const BTW_SORTED = nodes.map(n => n.betweenness).sort((a,b) => a-b);
+function percentileOf(sorted, v){ return sorted.filter(x => x <= v).length / sorted.length; }
+function degreeTier(d){
+  const p = percentileOf(DEG_SORTED, d.degree);
+  return p >= 0.67 ? "more than most" : p <= 0.33 ? "fewer than most" : "about average";
+}
+function degreeRank(d){ return 1 + nodes.filter(n => n.degree > d.degree).length; }
+function bridgingTier(d){
+  if(d.bridge) return "High";
+  return percentileOf(BTW_SORTED, d.betweenness) >= 0.5 ? "Typical" : "Low";
+}
+function ownCirclePct(d){ return Math.round((d.engaging || 0) * 100); }
+function ownCircleRead(d){
+  const p = ownCirclePct(d);
+  return p >= 70 ? "Most of their ties are inside their own circle."
+    : p >= 45 ? "Their ties are split between their own circle and others."
+    : "Most of their ties reach other circles. They may be a good person to make introductions through.";
+}
+
+// ---------- Graph utilities ----------
+function linkEndpoints(l){
+  return [typeof l.source === "object" ? l.source.id : l.source, typeof l.target === "object" ? l.target.id : l.target];
+}
+function pairKey(a,b){ return [a,b].sort().join("|"); }
+function isMadeConnection(l){
+  const [s,t] = linkEndpoints(l), key = pairKey(s,t);
+  return commitments.some(c => pairKey(c.helper,c.helped) === key);
+}
+const NET_ADJACENCY = new Map();
+nodes.forEach(n => NET_ADJACENCY.set(n.id, new Set()));
+links.forEach(l => {
+  const [s,t] = linkEndpoints(l);
+  if(NET_ADJACENCY.has(s)) NET_ADJACENCY.get(s).add(t);
+  if(NET_ADJACENCY.has(t)) NET_ADJACENCY.get(t).add(s);
+});
+const NET_UNREACHABLE = 99;
+function netBfs(startId){
+  const dist = new Map([[startId, 0]]), q = [startId];
+  while(q.length){
+    const cur = q.shift(), d = dist.get(cur);
+    NET_ADJACENCY.get(cur).forEach(nb => { if(!dist.has(nb)){ dist.set(nb, d+1); q.push(nb); } });
+  }
+  return dist;
+}
+const NET_DISTANCE_FROM = new Map();
+nodes.forEach(n => NET_DISTANCE_FROM.set(n.id, netBfs(n.id)));
+function netPairDistance(aId, bId){
+  const d = NET_DISTANCE_FROM.get(aId).get(bId);
+  return d === undefined ? NET_UNREACHABLE : d;
+}
+
+// ---------- Network health ----------
+function networkHealth(){
+  const n = nodes.length, m = links.length;
+  const density = n > 1 ? (2*m) / (n*(n-1)) : 0;
+  const avgDegree = n ? nodes.reduce((s,x) => s + (x.degree||0), 0) / n : 0;
+  let totalDist = 0, pairs = 0, within2Total = 0;
+  nodes.forEach(nd => {
+    let within2 = 0;
+    NET_DISTANCE_FROM.get(nd.id).forEach((d,id) => { if(id !== nd.id){ totalDist += d; pairs++; if(d <= 2) within2++; } });
+    within2Total += n > 1 ? within2 / (n - 1) : 0;
+  });
+  return {density, avgDegree, avgDist: pairs ? totalDist / pairs : 0, pctWithin2: n ? within2Total / n : 0};
+}
+const SNAPSHOT_METRICS = [
+  {key:"avgDegree", label:"Average relationships per person", fmt:v=>v.toFixed(1), deltaFmt:d=>(d>=0?"+":"")+d.toFixed(1), better:"up"},
+  {key:"pctWithin2", label:"Share of the network each person can reach in two steps (average)", fmt:v=>Math.round(v*100)+"%", deltaFmt:d=>(d>=0?"+":"")+Math.round(d*100)+" pts", better:"up"},
+  {key:"avgDist", label:"Average steps between any two people", fmt:v=>v.toFixed(1), deltaFmt:d=>(d>=0?"+":"")+d.toFixed(1), better:"down"},
+  {key:"density", label:"Share of all possible relationships that exist", fmt:v=>Math.round(v*100)+"%", deltaFmt:d=>(d>=0?"+":"")+Math.round(d*100)+" pts", better:"up"}
+];
+// Pretend history: each earlier week 7% "less healthy". Replaced by real weekly
+// snapshots once the shared database is connected.
+function pretendPast(current, better, weeksAgo){
+  const pct = 0.07 * weeksAgo;
+  return better === "up" ? current * (1 - pct) : current * (1 + pct);
+}
+const NH_NOW = networkHealth();
+const LAST_WEEK = Object.fromEntries(SNAPSHOT_METRICS.map(m => [m.key, pretendPast(NH_NOW[m.key], m.better, 1)]));
+let savedSnapshots = [];
+function renderHealthRow(){
+  const now = networkHealth();
+  document.getElementById("healthRow").innerHTML = SNAPSHOT_METRICS.map(m => {
+    const v = now[m.key], diff = v - LAST_WEEK[m.key];
+    const improving = Math.abs(diff) < 1e-9 ? null : (m.better === "up" ? diff > 0 : diff < 0);
+    const color = improving === null ? "var(--faint)" : improving ? "var(--teal)" : "var(--bridge)";
+    const arrow = improving === null ? "→" : (diff > 0 ? "▲" : "▼");
+    const word = improving === null ? "no change" : improving ? "better" : "worse";
+    return '<div class="stat"><div class="v">'+esc(m.fmt(v))+'</div><div class="l">'+esc(m.label)+'</div>'+
+      '<div class="delta" style="color:'+color+'">'+arrow+' '+esc(m.deltaFmt(diff))+' since last week ('+word+')</div></div>';
+  }).join("");
+}
+function recordSnapshot(){
+  savedSnapshots.push({date: new Date().toISOString().slice(0,10), values: networkHealth()});
+  const note = document.getElementById("snapshotNote");
+  note.textContent = "Saved a snapshot for " + niceDate(savedSnapshots[savedSnapshots.length-1].date) +
+    ". In the full version it's kept with the weekly ones, so you can compare against this moment later. (Demo: it's gone when you reload.)";
+  note.style.color = "var(--teal)";
+}
+
+// ---------- Activity ----------
+function renderStats(){
+  const nCross = links.filter(l => l.cross_cluster).length;
+  const active = commitments.filter(c => c.status !== "done").length;
+  const rows = [
+    [nodes.length, "People and groups", ""],
+    [links.length, "Relationships", ""],
+    [Math.round(100*nCross/links.length) + "%", "Of relationships cross circles", ""],
+    [nodes.filter(n => n.bridge).length, "Connectors", "link circles together"],
+    [nodes.reduce((s,n)=>s+n.needs.length,0), "Requests posted", ""],
+    [nodes.reduce((s,n)=>s+n.offers.length,0), "Offers posted", ""],
+    [commitments.length, "Commitments", active + " still active"]
+  ];
+  document.getElementById("statRow").innerHTML = rows.map(r =>
+    '<div class="stat"><div class="v">'+r[0]+'</div><div class="l">'+r[1]+'</div>'+
+    (r[2] ? '<div class="delta" style="color:var(--muted);font-weight:600">'+r[2]+'</div>' : '')+'</div>').join("");
+  renderHealthRow();
+}
+renderStats();
+
+/* ---------- Map ---------- */
+let sim, svgG, linkSel, introSel, nodeSel, W = 900, H = 600, SMALL = false;
+function nodeR(d){ return 6 + Math.min(10, (d.degree || 1) * 1.1); }
+function circleCenter(ci){
+  const R = Math.min(W,H) * 0.30, a = (2 * Math.PI * ci) / CIRCLE_COUNT - Math.PI/2;
+  return [W/2 + R * Math.cos(a), H/2 + R * Math.sin(a)];
+}
+(function startSim(){
+  const svg = d3.select("#ecoSvg");
+  W = svg.node().clientWidth || 900;
+  H = svg.node().clientHeight || 600;
+  SMALL = W < 600;
+  svg.attr("viewBox", [0,0,W,H]);
+  svgG = svg.append("g");
+  svg.call(d3.zoom().scaleExtent([0.4,3]).on("zoom", e => svgG.attr("transform", e.transform)));
+  nodes.forEach(d => { const c = circleCenter(d.cluster); d.x = c[0]+(Math.random()-0.5)*40; d.y = c[1]+(Math.random()-0.5)*40; });
+  const pad = 14;
+  sim = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d=>d.id).distance(l=>l.cross_cluster?(SMALL?80:120):(SMALL?32:46)).strength(0.5))
+    .force("charge", d3.forceManyBody().strength(SMALL ? -70 : -160))
+    .force("collide", d3.forceCollide().radius(d=>nodeR(d)+4))
+    .force("circle", alpha => nodes.forEach(d => {
+      const c = circleCenter(d.cluster);
+      d.vx += (c[0]-d.x)*0.06*alpha; d.vy += (c[1]-d.y)*0.06*alpha;
+    }))
+    .force("center", d3.forceCenter(W/2,H/2))
+    .on("tick", () => {
+      nodes.forEach(d => { d.x = Math.max(pad, Math.min(W-pad, d.x)); d.y = Math.max(pad, Math.min(H-pad, d.y)); });
+      tick();
+    });
+  linkSel = svgG.append("g").selectAll("line").data(links).enter().append("line");
+  introSel = svgG.append("g");
+  nodeSel = svgG.append("g").selectAll("g.nd").data(nodes).enter().append("g").attr("class","nd").style("cursor","pointer")
+    .call(d3.drag()
+      .on("start",(e,d)=>{ if(!e.active) sim.alphaTarget(0.2).restart(); d.fx=d.x; d.fy=d.y; })
+      .on("drag",(e,d)=>{ d.fx=e.x; d.fy=e.y; })
+      .on("end",(e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+  nodeSel.append("circle").attr("class","ring").attr("fill","none").attr("stroke",BRIDGE).attr("stroke-width",2.5).attr("r", d=>nodeR(d)+3.5);
+  nodeSel.append("circle").attr("class","shape").attr("r", d=>nodeR(d)).attr("stroke","#050A16").attr("stroke-width",1.5);
+  // On a phone there's no room for 40 names; tap someone to see who they are.
+  if(!SMALL){
+    nodeSel.append("text").attr("class","nlabel").attr("text-anchor","middle").attr("dy", d=>nodeR(d)+12)
+      .attr("font-size","10px").attr("fill","#C7D3E8").attr("pointer-events","none")
+      .text(d => d.kind==="person" ? d.name.split(" ")[0] : (d.name.length>20?d.name.slice(0,19)+"…":d.name));
+  } else {
+    document.getElementById("mapHint").textContent = "Tap anyone for their profile. Pinch to zoom.";
+  }
+  nodeSel.on("click",(e,d)=>{ openProfile(d, SMALL); e.stopPropagation(); })
+    .on("mouseenter",(e,d)=>showTip(e,d)).on("mousemove",(e,d)=>showTip(e,d)).on("mouseleave",hideTip);
+  ecoRefresh();
+  buildLegend();
+})();
+function tick(){
+  linkSel.attr("x1",l=>l.source.x).attr("y1",l=>l.source.y).attr("x2",l=>l.target.x).attr("y2",l=>l.target.y);
+  introSel.selectAll("line").attr("x1",d=>byId(d.a).x).attr("y1",d=>byId(d.a).y).attr("x2",d=>byId(d.b).x).attr("y2",d=>byId(d.b).y);
+  nodeSel.attr("transform", d=>"translate("+d.x+","+d.y+")");
+}
+function drawIntroLines(){
+  introSel.selectAll("line").data(introductions.filter(x => x.status !== "no"), d => d.id).join("line")
+    .attr("stroke", INTRO).attr("stroke-width", 2).attr("stroke-dasharray", "5 4").attr("stroke-opacity", 0.9);
+  tick();
+}
+function setScene(s){
+  scene = s;
+  document.querySelectorAll(".map-toolbar .chip").forEach(c => c.classList.remove("active"));
+  document.getElementById(s==="circle" ? "chipCircle" : s==="role" ? "chipRole" : "chipBridges").classList.add("active");
+  ecoRefresh(); buildLegend();
+}
+function focusOnMap(ids, label){
+  focusIds = new Set(ids);
+  document.getElementById("ecoSearch").value = "";
+  const chip = document.getElementById("mapFocus");
+  chip.textContent = "Showing: " + label + "  ✕";
+  chip.setAttribute("aria-label", "Stop showing " + label + " on the map");
+  chip.style.display = "";
+  ecoRefresh();
+  document.querySelector(".eco-layout").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function clearFocus(){
+  focusIds = null;
+  document.getElementById("mapFocus").style.display = "none";
+  ecoRefresh();
+}
+function ecoRefresh(){
+  const q = (document.getElementById("ecoSearch").value||"").toLowerCase().trim();
+  if(q && focusIds){ focusIds = null; document.getElementById("mapFocus").style.display = "none"; }
+  const matches = d => !q || d.name.toLowerCase().includes(q);
+  nodeSel.select(".shape").attr("fill", d => scene==="role" ? ROLE_COLOR[roleOf(d)] : circleColor(d.cluster));
+  // In "Ties across circles" connectors stay bright and everyone else steps back a
+  // little, but not so far that the ends of the orange lines disappear.
+  nodeSel.style("opacity", d => {
+    if(focusIds) return focusIds.has(d.id) ? 1 : 0.1;
+    if(q) return matches(d) ? 1 : 0.12;
+    if(scene === "bridges") return d.bridge ? 1 : 0.55;
+    return 1;
+  });
+  nodeSel.select(".ring").style("display", d => (d.bridge && scene!=="role") ? null : "none");
+  linkSel
+    .attr("stroke", l => isMadeConnection(l) ? TEAL : (scene==="bridges" && l.cross_cluster ? BRIDGE : "#31415F"))
+    .attr("stroke-width", l => isMadeConnection(l) ? 2.4 : (scene==="bridges" && l.cross_cluster ? 1.8 : 1))
+    .style("opacity", l => {
+      if(focusIds){
+        const [s,t] = linkEndpoints(l);
+        return focusIds.has(s) && focusIds.has(t) ? 0.95 : 0.04;
+      }
+      if(q){
+        const [s,t] = linkEndpoints(l);
+        if(!(matches(byId(s)) || matches(byId(t)))) return 0.05;
+      }
+      if(isMadeConnection(l)) return 0.95;
+      if(scene === "bridges") return l.cross_cluster ? 0.9 : 0.1;
+      return 0.65;
+    });
+  introSel.style("opacity", (q || focusIds) ? 0.25 : 1);
+}
+function buildLegend(){
+  let html = "";
+  if(scene==="role"){
+    Object.keys(ROLE_LABEL).forEach(k => html += '<span class="lg"><span class="dotc" style="background:'+ROLE_COLOR[k]+'"></span>'+esc(ROLE_LABEL[k])+'</span>');
+  } else {
+    for(let i=0;i<CIRCLE_COUNT;i++) html += '<span class="lg"><span class="dotc" style="background:'+circleColor(i)+'"></span>'+esc(circleName(i))+'</span>';
+    html += '<span class="lg"><span class="ring"></span>Connector (top fifth for bridging)</span>';
+  }
+  if(scene==="bridges") html += '<span class="lg"><span class="dash cross"></span>Relationship that crosses circles</span>';
+  html += '<span class="lg"><span class="dash"></span>Working together (a commitment)</span>';
+  html += '<span class="lg"><span class="dash intro"></span>Introduction you logged</span>';
+  document.getElementById("ecoLegend").innerHTML = html;
+}
+const tip = document.getElementById("ecoTip");
+function showTip(e,d){
+  if(SMALL) return;
+  tip.innerHTML = "<b>"+esc(d.name)+"</b><div class='tt-sub'>"+esc(d.org_type)+" · "+esc(d.town)+"</div>"+
+    "<div class='tt-sub'>"+d.degree+" relationships · bridging "+bridgingTier(d).toLowerCase()+" · "+ownCirclePct(d)+"% of ties in own circle</div>"+
+    (scene==="role" ? "<div class='tt-sub'>"+esc(ROLE_LABEL[roleOf(d)])+"</div>" : "");
+  const shell = document.querySelector(".map-shell").getBoundingClientRect();
+  tip.style.left = Math.max(8, Math.min(e.clientX-shell.left+14, shell.width-270))+"px";
+  tip.style.top = (e.clientY-shell.top+10)+"px";
+  tip.style.opacity = 1;
+}
+function hideTip(){ tip.style.opacity = 0; }
+
+/* ---------- Profile ---------- */
+function openProfile(d, scroll){
+  const p = document.getElementById("profilePanel");
+  const pct = ownCirclePct(d);
+  let html = '<p class="pf-name">'+esc(d.name)+'</p>'+
+    '<p class="pf-sub">'+esc(d.org_type)+' · '+esc(d.town)+'<br>'+esc(d.email)+' · '+esc(d.phone)+'</p>'+
+    '<div class="badges">'+
+    '<span class="badge" style="background:'+circleColor(d.cluster)+';color:#fff">'+esc(circleName(d.cluster))+'</span>'+
+    '<span class="badge" style="background:'+ROLE_COLOR[roleOf(d)]+';color:#fff">'+esc(ROLE_SHORT[roleOf(d)])+'</span>'+
+    '<span class="badge">'+(d.kind==="org"?"Organization":"Person")+'</span></div>';
+  html += '<div class="metric-grid">'+
+    '<div class="metric"><div class="v">'+d.degree+'</div><div class="l">relationships, '+esc(degreeTier(d))+'</div></div>'+
+    '<div class="metric"><div class="v">#'+degreeRank(d)+'</div><div class="l">of '+nodes.length+' by relationships</div></div>'+
+    '<div class="metric"><div class="v">'+esc(bridgingTier(d))+'</div><div class="l">bridging (score '+d.betweenness.toFixed(3)+')</div></div>'+
+    '<div class="metric"><div class="v">'+pct+'%</div><div class="l">of ties in own circle</div></div></div>';
+  html += '<div class="pf-h">How they connect</div><p class="pf-sub" style="margin-bottom:0">'+esc(ownCircleRead(d))+'</p>';
+  html += '<div class="pf-h">What they bring</div>' + d.assets.map(a => {
+    const detail = assetDetail(a);
+    return '<div class="pf-item">'+esc(assetText(a))+(detail ? ' <span style="color:var(--faint)">: '+esc(detail)+'</span>' : '')+'</div>';
+  }).join("");
+  if(d.offers.length) html += '<div class="pf-h">Offers</div>' + d.offers.map(o=>'<div class="pf-item">'+esc(o)+'</div>').join("");
+  if(d.needs.length) html += '<div class="pf-h">Requests</div>' + d.needs.map(n=>'<div class="pf-item">'+esc(n)+'</div>').join("");
+  const mine = initiativesFor(d.id);
+  if(mine.length) html += '<div class="pf-h">Initiatives</div>' + mine.map(x =>
+    '<div class="pf-item">'+esc(x.role)+': '+esc(x.ini.name)+'</div>').join("");
+  html += '<button class="btn sm" onclick="prefillIntro(\''+d.id+'\')">Start an introduction</button>';
+  p.innerHTML = html;
+  p.scrollTop = 0;
+  // On a wide screen the profile sits beside the map, so bring both into view;
+  // on a narrow one it sits below the map, so go straight to it.
+  if(scroll) (window.innerWidth > 960 ? document.querySelector(".eco-layout") : p).scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- Matching ---------- */
+// Requests are compared with what other people bring (their assets) and with what they
+// have offered on the board. Words are compared after dropping common words and word
+// endings, and a few words that mean the same thing here are treated as one (van,
+// truck, trailer, and so on). Offers count for more than assets: an offer is someone
+// saying "I'll do this," not just "I know about this."
+const STOP = new Set(("a,an,and,the,to,for,of,in,on,with,we,our,us,i,my,me,is,are,be,or,at,by,it,its,this,that,who,how,can,new,per,two,one,any,all,from,into,just,more,most,"+
+  "need,needs,looking,help,want,wants,seeking,someone,anyone,partner,partners,group,groups,community,communities,local,free,happy,"+
+  "available,offering,offer,year,month,first,experience,relationships,relationship,connections,connection,access,support,people,"+
+  "bring,brings,will,give,get,make,start,starting,able,very,much,also,each,every,other,some,state,small,three,five,ten,weekly,there,their,them,than").split(","));
+const SAME_MEANING = [
+  ["van","truck","pickup","trailer","vehicle","transportation","transport"],
+  ["grant","funding","fundraising","funder","philanthropy"],
+  ["data","dashboard","map"],
+  ["kitchen","cook","cooking"],
+  ["youth","student","students","young"],
+  ["elder","senior","seniors","older"]
+];
+const CANON = {};
+SAME_MEANING.forEach(g => g.forEach(w => CANON[w] = g[0]));
+function stem(w){ return w.length > 4 ? w.replace(/(ies)$/,"y").replace(/(ing|ed|es|s)$/,"") : w; }
+function terms(s){
+  const out = new Set();
+  String(s).toLowerCase().replace(/[^a-z\s]/g," ").split(/\s+/).forEach(w => {
+    if(w.length < 3 || STOP.has(w)) return;
+    const c = CANON[w] || CANON[w.replace(/s$/,"")];
+    out.add(c || stem(w));
+  });
+  return out;
+}
+// Words count as the same if they match exactly or share their first five letters
+// (sponsor and sponsorship, digitize and digitizing).
+function sameTerm(a, b){ return a === b || (a.length >= 5 && b.length >= 5 && a.slice(0,5) === b.slice(0,5)); }
+// Words that show up across many posts ("food", "business") say little about whether
+// two specific posts fit, so they don't count toward a match.
+const ALL_TEXTS = [];
+nodes.forEach(n => { n.assets.forEach(a => ALL_TEXTS.push(assetSearchText(a))); n.offers.forEach(o => ALL_TEXTS.push(o)); n.needs.forEach(t => ALL_TEXTS.push(t)); });
+const DOC_TERMS = [...new Set(ALL_TEXTS)].map(terms);
+const COMMON = new Set();
+(function(){
+  const df = new Map();
+  DOC_TERMS.forEach(set => set.forEach(t => df.set(t, (df.get(t)||0) + 1)));
+  const limit = Math.max(5, Math.round(DOC_TERMS.length * 0.07));
+  df.forEach((c, t) => { if(c > limit && !Object.values(CANON).includes(t)) COMMON.add(t); });
+})();
+function shared(needSet, otherSet){
+  return [...needSet].filter(t => !COMMON.has(t) && [...otherSet].some(o => sameTerm(t, o)));
+}
+// Words from the same-meaning groups above (van, truck, trailer...) are a deliberate
+// equivalence, so one of them is enough on its own. Any other match needs two words.
+const GROUP_TERMS = new Set(SAME_MEANING.map(g => g[0]));
+// Best single thing this person brings or offers for one request.
+function matchAgainst(needTerms, person){
+  let best = null;
+  const consider = (kind, text, searchText) => {
+    const hit = shared(needTerms, terms(searchText));
+    if(!hit.length) return;
+    const m = {kind, text, words: hit, n: hit.length, strong: hit.length >= 2 || hit.some(w => GROUP_TERMS.has(w)),
+               score: hit.length + (kind === "offer" ? 0.5 : 0)};
+    if(!best || (m.strong && !best.strong) || (m.strong === best.strong && m.score > best.score)) best = m;
+  };
+  person.assets.forEach(a => consider("asset", assetText(a), assetSearchText(a)));
+  person.offers.forEach(o => consider("offer", o, o));
+  return best;
+}
+// Good enough to suggest: two shared words, or one from a same-meaning group.
+function goodEnough(m){ return !!m && m.strong; }
+function bestMatchFor(need, owner){
+  const nt = terms(need);
+  let best = null;
+  nodes.forEach(o => {
+    if(o.id === owner.id) return;
+    const m = matchAgainst(nt, o);
+    if(!m) return;
+    const better = !best || (m.strong && !best.m.strong) || (m.strong === best.m.strong && (m.score > best.m.score || (m.score === best.m.score && o.degree > best.who.degree)));
+    if(better) best = {who: o, m};
+  });
+  return best;
+}
+function whatLine(m){
+  return m.kind === "offer" ? 'offered: "'+esc(m.text)+'"' : 'brings: '+esc(m.text);
+}
+
+/* ---------- Requests with no good match ---------- */
+let gapsExpanded = false;
+const GAP_PREVIEW = 6;
+function renderGaps(){
+  const rows = [];
+  nodes.forEach(n => n.needs.forEach(need => {
+    const b = bestMatchFor(need, n);
+    if(!b || !goodEnough(b.m)) rows.push({n, need});
+  }));
+  const shown = gapsExpanded ? rows : rows.slice(0, GAP_PREVIEW);
+  const more = rows.length > GAP_PREVIEW
+    ? '<button class="btn sm" onclick="gapsExpanded=!gapsExpanded;renderGaps()">'+(gapsExpanded ? 'Show fewer' : 'Show all '+rows.length)+'</button>' : '';
+  document.getElementById("gapCount").textContent = rows.length ? rows.length + " of " + nodes.reduce((s,n)=>s+n.needs.length,0) + " requests." : "";
+  document.getElementById("gapList").innerHTML = rows.length
+    ? shown.map(r => '<div class="card"><b>'+esc(r.n.name)+'</b> <span class="who">· '+esc(r.n.town)+'</span><br>'+esc(r.need)+'<br>'+
+        '<button class="btn sm" onclick="prefillIntro(\''+r.n.id+'\')">Start an introduction</button></div>').join("") + more
+    : '<p class="lede">Every request has at least one good match on the exchange.</p>';
+}
+
+/* ---------- Least connected ---------- */
+function renderQuiet(){
+  const low = nodes.slice().sort((a,b)=>a.degree-b.degree || a.name.localeCompare(b.name)).slice(0,5);
+  document.getElementById("quietList").innerHTML = low.map(n =>
+    '<div class="card" style="border-left-color:var(--teal)"><b>'+esc(n.name)+'</b> <span class="who">· '+esc(n.town)+' · '+n.degree+' '+(n.degree===1?'relationship':'relationships')+'</span><br>'+
+    '<span class="who">Brings: '+esc(n.assets.slice(0,2).map(assetText).join("; "))+'</span><br>'+
+    '<button class="btn sm" onclick="prefillIntro(\''+n.id+'\')">Start an introduction</button></div>').join("");
+}
+
+/* ---------- Commitments ---------- */
+function renderCommitments(){
+  const wrap = document.getElementById("commitList");
+  if(!commitments.length){ wrap.innerHTML = '<p class="lede">No commitments yet.</p>'; return; }
+  wrap.innerHTML = commitments.slice().sort((a,b)=> (a.status==="done") - (b.status==="done")).map(c => {
+    const h = byId(c.helper), d = byId(c.helped), done = c.status === "done";
+    return '<div class="card" style="border-left-color:'+(done?DONE:TEAL)+'">'+
+      '<b>'+esc(h?h.name:c.helper)+'</b> is helping <b>'+esc(d?d.name:c.helped)+'</b>'+
+      '<span class="badge" style="background:'+(done?DONE:TEAL)+';color:'+(done?'#fff':'#062A26')+'">'+(done?"Done":"Active")+'</span>'+
+      '<br><span class="who">With: '+esc(c.need)+'</span><br><span class="who">Since '+esc(niceDate(c.date))+'</span></div>';
+  }).join("");
+}
+
+/* ---------- Introductions ---------- */
+(function fillIntroSelects(){
+  const opts = nodes.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(n => '<option value="'+n.id+'">'+esc(n.name)+'</option>').join("");
+  document.getElementById("introA").innerHTML = '<option value="">Choose someone</option>' + opts;
+  document.getElementById("introB").innerHTML = '<option value="">Choose someone</option>' + opts;
+})();
+function showIntroMsg(text, ok){
+  const el = document.getElementById("introMsg");
+  el.textContent = text; el.className = "form-msg" + (ok ? " ok" : "");
+}
+function goToIntroForm(focusId){
+  document.getElementById("introSection").scrollIntoView({behavior:"smooth", block:"start"});
+  setTimeout(() => document.getElementById(focusId).focus({preventScroll:true}), 450);
+}
+function prefillIntro(id){
+  document.getElementById("introA").value = id;
+  document.getElementById("introB").value = "";
+  showIntroMsg("Now choose who to introduce " + byId(id).name + " to.", true);
+  goToIntroForm("introB");
+}
+function prefillIntroPair(aId, bId, why){
+  document.getElementById("introA").value = aId;
+  document.getElementById("introB").value = bId;
+  document.getElementById("introNote").value = why || "";
+  showIntroMsg("Ready to log. Add a date if it wasn't today, then press Log introduction.", true);
+  goToIntroForm("introDate");
+}
+let introSeq = 0;
+function logIntro(){
+  const a = document.getElementById("introA").value, b = document.getElementById("introB").value;
+  if(!a || !b){ showIntroMsg("Choose both people first."); return; }
+  if(a === b){ showIntroMsg("Choose two different people."); return; }
+  if(introductions.some(x => pairKey(x.a,x.b) === pairKey(a,b))){ showIntroMsg("You've already logged an introduction between these two."); return; }
+  const date = document.getElementById("introDate").value || new Date().toISOString().slice(0,10);
+  introductions.push({id: ++introSeq, a, b, date, note: document.getElementById("introNote").value.trim(), status: "open"});
+  document.getElementById("introNote").value = "";
+  document.getElementById("introA").value = ""; document.getElementById("introB").value = "";
+  showIntroMsg("Logged: " + byId(a).name + " and " + byId(b).name + ".", true);
+  afterIntroChange();
+}
+function setIntroStatus(id, status){
+  const x = introductions.find(i => i.id === id);
+  if(x){ x.status = status; afterIntroChange(); }
+}
+const INTRO_STATUS = {open:{label:"Follow up", color:INTRO}, worked:{label:"Led to working together", color:DONE}, no:{label:"Didn't go anywhere", color:"#5A6B8C"}};
+function renderIntros(){
+  const wrap = document.getElementById("introList");
+  const worked = introductions.filter(x => x.status === "worked").length, open = introductions.filter(x => x.status === "open").length;
+  document.getElementById("introSummary").textContent = introductions.length
+    ? introductions.length + " logged · " + worked + " led to working together · " + open + " still to follow up"
+    : "";
+  if(!introductions.length){ wrap.innerHTML = '<p class="lede">None logged yet.</p>'; return; }
+  wrap.innerHTML = introductions.slice().reverse().map(x => {
+    const na = byId(x.a), nb = byId(x.b), st = INTRO_STATUS[x.status];
+    const actions = x.status === "open"
+      ? '<button class="btn sm" onclick="setIntroStatus('+x.id+',\'worked\')">Led to working together</button>'+
+        '<button class="btn sm" onclick="setIntroStatus('+x.id+',\'no\')">Didn\'t go anywhere</button>'
+      : '<button class="btn sm" onclick="setIntroStatus('+x.id+',\'open\')">Reopen</button>';
+    return '<div class="card" style="border-left-color:'+st.color+'">'+
+      '<b>'+esc(na.name)+'</b> and <b>'+esc(nb.name)+'</b>'+
+      '<span class="badge" style="background:'+st.color+';color:#fff">'+st.label+'</span>'+
+      '<br><span class="who">'+esc(niceDate(x.date))+(x.note?' · '+esc(x.note):'')+'</span><br>'+actions+'</div>';
+  }).join("");
+}
+function afterIntroChange(){ renderIntros(); drawIntroLines(); siRenderList(); }
+
+/* ---------- Suggested pairs ---------- */
+const siExistingPairs = new Set(links.map(l => { const [s,t] = linkEndpoints(l); return pairKey(s,t); }));
+function siBuildPool(){
+  const out = [];
+  for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+    const a = nodes[i], b = nodes[j];
+    if(siExistingPairs.has(pairKey(a.id,b.id))) continue;
+    let best = null;
+    [[a,b],[b,a]].forEach(([needOwner, other]) => needOwner.needs.forEach(need => {
+      const m = matchAgainst(terms(need), other);
+      if(goodEnough(m) && (!best || m.score > best.m.score)) best = {m, need, needOwner, other};
+    }));
+    if(best) out.push(Object.assign(best, {cross: a.cluster !== b.cluster, dist: netPairDistance(a.id,b.id), minDeg: Math.min(a.degree, b.degree)}));
+  }
+  return out;
+}
+const SI_POOL = siBuildPool(), SI_CAP = 12;
+const SI_LENSES = {
+  match: {label:"Best match",
+    stat:(n,t) => "Showing "+n+" of "+t+" possible pairs, strongest match first. A pair qualifies when one side's request and what the other brings or has offered share at least two key words, or one closely related word like van and truck.",
+    rank: s => s.m.score + (s.cross ? 0.5 : 0)},
+  bridge: {label:"Link distant parts",
+    stat:(n,t) => "Showing "+n+" of "+t+" possible pairs, favoring people who are many steps apart on the map today. These stretch the network instead of filling in ties that are nearly there.",
+    rank: s => s.m.score + Math.min(s.dist, 6) * 0.6 + (s.cross ? 0.3 : 0)},
+  reach: {label:"Bring people in",
+    stat:(n,t) => "Showing "+n+" of "+t+" possible pairs, favoring pairs where one side has very few relationships today.",
+    rank: s => s.m.score + Math.max(0, 4 - s.minDeg) * 0.7 + (s.cross ? 0.3 : 0)}
+};
+let siLens = "match", SI_SHOWN = [];
+function siTags(s){
+  let t = "";
+  if(s.dist >= NET_UNREACHABLE) t += '<span class="badge" style="background:#7C4DDA;color:#fff">not connected on the map</span>';
+  else if(s.dist >= 4) t += '<span class="badge" style="background:#7C4DDA;color:#fff">'+s.dist+' steps apart</span>';
+  if(s.minDeg <= 2) t += '<span class="badge" style="background:var(--teal);color:#062A26">few ties today</span>';
+  if(s.cross) t += '<span class="badge" style="background:var(--bridge);color:#2b1408">crosses circles</span>';
+  return t;
+}
+function siRenderTabs(){
+  document.getElementById("siTabs").innerHTML = Object.keys(SI_LENSES).map(k =>
+    '<button class="chip'+(k===siLens?' active':'')+'" onclick="siSetLens(\''+k+'\')">'+esc(SI_LENSES[k].label)+'</button>').join("");
+}
+function siSetLens(k){ siLens = k; siRenderTabs(); siRenderList(); }
+function siRenderList(){
+  const L = SI_LENSES[siLens];
+  const logged = new Set(introductions.map(x => pairKey(x.a, x.b)));
+  const pool = SI_POOL.filter(s => !logged.has(pairKey(s.needOwner.id, s.other.id)));
+  SI_SHOWN = pool.map(s => Object.assign({}, s, {rank: L.rank(s)})).sort((x,y) => y.rank - x.rank).slice(0, SI_CAP);
+  document.getElementById("siStat").textContent = L.stat(SI_SHOWN.length, pool.length);
+  const wrap = document.getElementById("siList");
+  if(!SI_SHOWN.length){ wrap.innerHTML = '<p class="lede">No suggested pairs right now.</p>'; return; }
+  wrap.innerHTML = SI_SHOWN.map((s, i) => {
+    const d = buildDraftEmail(s);
+    return '<div class="card"><b>'+esc(s.needOwner.name)+'</b> and <b>'+esc(s.other.name)+'</b>'+siTags(s)+
+      '<br><span class="who">'+esc(circleName(s.needOwner.cluster))+(s.cross ? ' · '+esc(circleName(s.other.cluster)) : '')+'</span>'+
+      '<div class="si-why"><b>'+esc(firstName(s.needOwner))+' asked for:</b> "'+esc(s.need)+'"<br>'+
+      '<b>'+esc(firstName(s.other))+' '+(s.m.kind === "offer" ? 'offered:' : 'brings:')+'</b> '+(s.m.kind === "offer" ? '"'+esc(s.m.text)+'"' : esc(s.m.text))+'</div>'+
+      '<div class="si-actions">'+
+      '<button class="btn sm" onclick="siLog('+i+')">Log this introduction</button>'+
+      '<button class="btn sm" onclick="toggleDraft('+i+')">Draft an email</button></div>'+
+      '<div class="si-draft" id="siDraft'+i+'" style="display:none">'+
+      '<div class="si-field"><label>To</label><div class="si-to">'+esc(d.to || "No email on file for one or both. Fill it in yourself.")+'</div></div>'+
+      '<div class="si-field"><label for="siSubj'+i+'">Subject</label><input class="si-subject" id="siSubj'+i+'" value="'+esc(d.subject)+'"></div>'+
+      '<div class="si-field"><label for="siBody'+i+'">Message</label><textarea class="si-bodytext" id="siBody'+i+'" rows="9">'+esc(d.body)+'</textarea></div>'+
+      '<button class="btn sm" onclick="copyDraft('+i+', this)">Copy email</button>'+
+      '<button class="btn sm" onclick="openDraftMail('+i+')">Open in email app</button>'+
+      '<p class="note" style="margin-top:8px">Edit freely. Nothing is sent from here.</p></div></div>';
+  }).join("");
+}
+function siLog(i){
+  const s = SI_SHOWN[i];
+  prefillIntroPair(s.needOwner.id, s.other.id, firstName(s.needOwner)+' asked for: '+s.need);
+}
+function buildDraftEmail(s){
+  const a = s.needOwner, b = s.other, aF = firstName(a), bF = firstName(b);
+  const body = [
+    "Hi " + aF + " and " + bF + ",", "",
+    "I wanted to connect you two through the Community Resilience Exchange.", "",
+    aF + " is looking for: \"" + s.need + "\"",
+    (s.m.kind === "offer" ? bF + " offered: \"" + s.m.text + "\"" : bF + " brings: " + s.m.text + "."), "",
+    "I'll let you two take it from here. Reply to all to find a time to talk.", "",
+    "Thanks,", "[Your name]"
+  ].join("\n");
+  return {subject: "Introduction: " + a.name + " and " + b.name, body, to: [a.email, b.email].filter(Boolean).join(",")};
+}
+function toggleDraft(i){
+  const el = document.getElementById("siDraft"+i);
+  if(el) el.style.display = el.style.display === "none" ? "block" : "none";
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); } catch(e){}
+  document.body.removeChild(ta);
+}
+function copyDraft(i, btn){
+  const text = "Subject: " + document.getElementById("siSubj"+i).value + "\n\n" + document.getElementById("siBody"+i).value;
+  const prev = btn.textContent, done = () => { btn.textContent = "Copied"; setTimeout(() => { btn.textContent = prev; }, 1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+function openDraftMail(i){
+  const s = SI_SHOWN[i], to = s ? [s.needOwner.email, s.other.email].filter(Boolean).join(",") : "";
+  window.location.href = "mailto:" + to + "?subject=" + encodeURIComponent(document.getElementById("siSubj"+i).value) +
+    "&body=" + encodeURIComponent(document.getElementById("siBody"+i).value);
+}
+
+/* ---------- Roster ---------- */
+function renderRoster(){
+  const cols = [["name","Name"],["kind","Type"],["town","Town"],["cluster","Circle"],["degree","Relationships"],["betweenness","Bridging"],["engaging","Ties in own circle"]];
+  const sorted = nodes.slice().sort((a,b) => {
+    let va = sortKey === "cluster" ? circleName(a.cluster) : a[sortKey], vb = sortKey === "cluster" ? circleName(b.cluster) : b[sortKey];
+    if(typeof va === "string"){ va = va.toLowerCase(); vb = String(vb).toLowerCase(); }
+    return (va<vb?-1:va>vb?1:0) * (sortAsc?1:-1);
+  });
+  let html = "<thead><tr>" + cols.map(c=>'<th onclick="sortBy(\''+c[0]+'\')">'+c[1]+(sortKey===c[0]?(sortAsc?" ▲":" ▼"):"")+"</th>").join("") + "</tr></thead><tbody>";
+  sorted.forEach(n => {
+    html += '<tr><td class="name" onclick="openById(\''+n.id+'\')">'+esc(n.name)+'</td>'+
+      '<td>'+(n.kind==="org"?"Organization":"Person")+'</td><td>'+esc(n.town)+'</td>'+
+      '<td><span class="badge" style="background:'+circleColor(n.cluster)+';color:#fff">'+esc(circleName(n.cluster))+'</span></td>'+
+      '<td>'+n.degree+'<div class="td-sub">#'+degreeRank(n)+' of '+nodes.length+'</div></td>'+
+      '<td>'+esc(bridgingTier(n))+'<div class="td-sub">score '+n.betweenness.toFixed(3)+'</div></td>'+
+      '<td>'+ownCirclePct(n)+'%</td></tr>';
+  });
+  document.getElementById("rosterTable").innerHTML = html + "</tbody>";
+}
+function sortBy(k){ if(sortKey===k) sortAsc = !sortAsc; else { sortKey = k; sortAsc = true; } renderRoster(); }
+function openById(id){ const d = byId(id); if(d) openProfile(d, true); }
+
+/* ---------- Exports ---------- */
+function csvCell(v){ return '"' + String(v == null ? "" : v).replace(/"/g,'""') + '"'; }
+function exportCsv(which){
+  let rows;
+  if(which === "nodes"){
+    rows = [["name","type","org_type","town","circle","relationships","bridging_score","share_ties_in_own_circle","connector","assets","requests","offers"]]
+      .concat(nodes.map(n => [n.name, n.kind, n.org_type, n.town, circleName(n.cluster), n.degree, n.betweenness, n.engaging, n.bridge,
+        n.assets.map(a => assetDetail(a) ? assetText(a)+" ("+assetDetail(a)+")" : assetText(a)).join("; "), n.needs.join("; "), n.offers.join("; ")]));
+  } else if(which === "links"){
+    rows = [["from","to","crosses_circles","working_together"]].concat(links.map(l => {
+      const [s,t] = linkEndpoints(l); return [byId(s).name, byId(t).name, !!l.cross_cluster, isMadeConnection(l)];
+    }));
+  } else if(which === "commitments"){
+    rows = [["helper","helped","request","status","date"]].concat(commitments.map(c => {
+      const h = byId(c.helper), d = byId(c.helped); return [h?h.name:c.helper, d?d.name:c.helped, c.need, c.status, c.date];
+    }));
+  } else {
+    rows = [["person_or_group","introduced_to","date","status","note"]].concat(introductions.map(x =>
+      [byId(x.a).name, byId(x.b).name, x.date, INTRO_STATUS[x.status].label, x.note]));
+  }
+  const blob = new Blob([rows.map(r => r.map(csvCell).join(",")).join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = {nodes:"exchange_people.csv", links:"exchange_relationships.csv", commitments:"exchange_commitments.csv", intros:"exchange_introductions.csv"}[which];
+  a.click();
+}
+
+/* ---------- Initiatives ---------- */
+// Pretend initiatives, as the project intake would record them. Dates are kept as
+// "days ago" so the demo never goes stale. In the full version these come from the
+// projects and project_ties tables, and "last change" is the latest of: someone's
+// status moving, someone confirming, a blocker being added or settled.
+const INITIATIVES = [
+  {id:"van", name:"Millbrook Farm-to-School Van", lead:"p03", started:33, changed:13,
+   what:"A reliable van so the farm co-op can deliver produce boxes to two elementary schools each week.",
+   people:[{id:"p00",status:"committed",confirmed:true},{id:"p06",status:"committed",confirmed:true},
+           {id:"p32",status:"consulted",confirmed:false},{id:"p04",status:"met",confirmed:true},
+           {name:"Pastor Williams",status:"consulted"}],
+   committedAtStart:1, blockers:["decision"], holder:"District transportation office", needs:["capital","place"]},
+  {id:"tools", name:"Cedar Flats Tool Library", lead:"p05", started:21, changed:6,
+   what:"Replace the tools lost in the shed fire with a shared lending library for gardens and neighbors.",
+   people:[{id:"p12",status:"committed",confirmed:true},{id:"p04",status:"consulted",confirmed:true},{id:"p21",status:"met",confirmed:false}],
+   committedAtStart:0, blockers:["site"], needs:["place"]},
+  {id:"shelter", name:"Rotating Winter Shelter", lead:"p23", started:95, changed:62,
+   what:"Congregations take turns hosting overnight shelter through the winter.",
+   people:[{id:"p22",status:"committed",confirmed:true},{id:"p01",status:"consulted",confirmed:true},{id:"p16",status:"met",confirmed:false}],
+   committedAtStart:1, blockers:["readiness"], needs:["skills","relationships"]},
+  {id:"trades", name:"Youth Trades Apprenticeship", lead:"p11", started:40, changed:9,
+   what:"Paid apprenticeships in the building trades for young people in Alderton and Cedar Flats.",
+   people:[{id:"p24",status:"committed",confirmed:true},{id:"p27",status:"consulted",confirmed:true},
+           {id:"p25",status:"consulted",confirmed:true},{id:"p19",status:"met",confirmed:false}],
+   committedAtStart:0, blockers:["connection"], needs:["economy","skills"]},
+  {id:"broadband", name:"Harper's Bend Broadband Scorecard", lead:"p37", started:50, changed:4,
+   what:"A community scorecard on broadband access to take to the state.",
+   people:[{id:"p14",status:"committed",confirmed:true},{id:"p25",status:"committed",confirmed:true},
+           {id:"p39",status:"consulted",confirmed:true},{id:"p32",status:"consulted",confirmed:true}],
+   committedAtStart:1, blockers:[], needs:["skills"]},
+  {id:"childcare", name:"Childcare Cooperative", lead:"p31", started:18, changed:18,
+   what:"A culturally rooted childcare cooperative, owned by the families who use it.",
+   people:[{id:"p36",status:"consulted",confirmed:true},{id:"p00",status:"met",confirmed:false}],
+   committedAtStart:0, blockers:["agreement","money"], needs:["capital","relationships"]},
+  {id:"mentoring", name:"Intergenerational Mentoring", lead:"p28", started:27, changed:27,
+   what:"Pair elders with students for weekly mentoring at the school and the historical society.",
+   people:[{id:"p25",status:"committed",confirmed:true},{id:"p29",status:"consulted",confirmed:true}],
+   committedAtStart:0, blockers:["unsure"], needs:["relationships"]}
+];
+// Same choices and wording as the project intake.
+const BLOCKER_INFO = {
+  decision:{label:"A decision or approval", short:"a decision or approval", group:"first"},
+  authority:{label:"Someone who can say yes", short:"someone who can say yes", group:"first"},
+  readiness:{label:"We're not ready yet", short:"the group getting ready", group:"first"},
+  agreement:{label:"Agreement from the community", short:"agreement from the community", group:"first"},
+  technical:{label:"Whether it will work", short:"finding out whether it will work", group:"first"},
+  timing:{label:"Timing", short:"the right timing", group:"first"},
+  site:{label:"A place", short:"a place", group:"match", cats:["place"]},
+  money:{label:"Money", short:"money", group:"match", cats:["capital"]},
+  connection:{label:"Someone we don't know yet", short:"a new contact", group:"match", cats:null},
+  unsure:{label:"Not sure", short:"something not yet named", group:"unsure"}
+};
+const CAT_OF = {};
+DATA.taxonomy.forEach(c => c.items.forEach(i => CAT_OF[i] = c.key));
+const CAT_NAME = {relationships:"neighbors and relationships", economy:"local economy", place:"space and equipment",
+  capital:"money and grants", skills:"skills and know-how"};
+const QUIET_DAYS = 42;
+const STATUS_WORD = {committed:"Committed", consulted:"Consulted", met:"Met"};
+const STATUS_COLOR = {committed:"#2DD4BF", consulted:"#D97706", met:"#5A6B8C"};
+
+function ago(days){
+  if(days <= 1) return "today";
+  if(days < 14) return days + " days ago";
+  if(days < 63) return Math.round(days/7) + " weeks ago";
+  return Math.round(days/30) + " months ago";
+}
+function iniGroup(ini){
+  const groups = ini.blockers.map(k => BLOCKER_INFO[k].group);
+  if(groups.includes("first")) return "first";
+  if(groups.includes("match")) return "ready";
+  if(groups.includes("unsure")) return "unsure";
+  return "moving";
+}
+function iniMemberIds(ini){ return [ini.lead].concat(ini.people.filter(p => p.id).map(p => p.id)); }
+function iniCircles(ini){
+  return [...new Set(iniMemberIds(ini).concat().filter(id => {
+    const p = ini.people.find(x => x.id === id);
+    return id === ini.lead || (p && p.status !== "met");
+  }).map(id => byId(id).cluster))];
+}
+function initiativesFor(personId){
+  const out = [];
+  INITIATIVES.forEach(ini => {
+    if(ini.lead === personId) out.push({ini, role:"Leads"});
+    const p = ini.people.find(x => x.id === personId);
+    if(p) out.push({ini, role: STATUS_WORD[p.status]});
+  });
+  return out;
+}
+// Categories the initiative needs that nobody committed or consulted brings yet.
+function iniUncovered(ini){
+  const brings = new Set();
+  [ini.lead].concat(ini.people.filter(p => p.id && p.status !== "met").map(p => p.id)).forEach(id =>
+    byId(id).assets.forEach(a => { const c = CAT_OF[assetText(a)]; if(c) brings.add(c); }));
+  return ini.needs.filter(c => !brings.has(c));
+}
+// People outside the initiative who bring what the next step calls for, with whoever
+// inside it already has a relationship with them, so the introduction can be warm.
+function iniSuggestions(ini){
+  const blocking = ini.blockers.map(k => BLOCKER_INFO[k]).filter(b => b.group === "match");
+  const uncovered = iniUncovered(ini);
+  const cats = [...new Set(blocking.flatMap(b => b.cats || (uncovered.length ? uncovered : ini.needs)))];
+  const inside = new Set(iniMemberIds(ini));
+  const insiders = [ini.lead].concat(ini.people.filter(p => p.id && p.status !== "met").map(p => p.id));
+  return nodes.filter(n => !inside.has(n.id)).map(n => {
+    const hits = n.assets.map(assetText).filter(a => cats.includes(CAT_OF[a]));
+    const via = insiders.filter(id => NET_ADJACENCY.get(id).has(n.id));
+    return {n, hits, via};
+  }).filter(x => x.hits.length)
+    .sort((a,b) => (b.via.length > 0) - (a.via.length > 0) || b.hits.length - a.hits.length || b.n.degree - a.n.degree)
+    .slice(0, 3);
+}
+function iniNextStep(ini){
+  const g = iniGroup(ini);
+  const first = ini.blockers.filter(k => BLOCKER_INFO[k].group === "first").map(k => BLOCKER_INFO[k].short);
+  const later = ini.blockers.filter(k => BLOCKER_INFO[k].group === "match").map(k => BLOCKER_INFO[k].short);
+  if(g === "first"){
+    let t = '<b>A conversation, not an introduction.</b> It\'s waiting on ' + esc(first.join(" and ")) + '.';
+    if(ini.holder) t += ' Who decides: ' + esc(ini.holder) + '.';
+    if(later.length) t += ' After that it will need ' + esc(later.join(" and ")) + '.';
+    return t;
+  }
+  if(g === "unsure") return '<b>Help naming it.</b> The lead isn\'t sure what\'s stopping the next step. A conversation would help before any introductions.';
+  if(g === "moving") return '<b>Nothing is stopping it right now.</b> A check-in is enough.';
+  const sugg = iniSuggestions(ini);
+  const ownerFirst = firstName(byId(ini.lead));
+  return '<b>Introductions could help.</b> It needs ' + esc(later.join(" and ")) + '.' +
+    (sugg.length ? sugg.map(x => '<div class="ini-sugg"><b>'+esc(x.n.name)+'</b> <span class="who">· '+esc(x.n.town)+'</span><br>'+
+      '<span class="who">Brings: '+esc(x.hits.slice(0,2).join("; "))+'</span><br>'+
+      '<span class="who">'+(x.via.length ? 'Already knows: '+esc(x.via.map(id => byId(id).name).join(", "))+', who can introduce them' : 'Nobody in the initiative knows them yet')+'</span><br>'+
+      '<button class="btn sm" onclick="prefillIntroPair(\''+ini.lead+'\',\''+x.n.id+'\',\''+esc((ini.name+' needs '+later.join(" and ")).replace(/'/g,""))+'\')">Introduce to '+esc(ownerFirst)+'</button></div>').join("")
+     : '<br><span class="who">Nobody on the exchange lists that yet.</span>');
+}
+function iniCard(ini){
+  const g = iniGroup(ini), lead = byId(ini.lead);
+  const c = ini.people.filter(p => p.status === "committed").length, k = ini.people.filter(p => p.status === "consulted").length,
+        m = ini.people.filter(p => p.status === "met").length, total = ini.people.length;
+  const onEx = ini.people.filter(p => p.id), conf = onEx.filter(p => p.confirmed).length;
+  const circles = iniCircles(ini), quiet = ini.changed >= QUIET_DAYS;
+  const pct = n => (100 * n / Math.max(1,total)).toFixed(1) + "%";
+  let badges = '';
+  if(quiet) badges += '<span class="badge" style="background:#7C4DDA;color:#fff">quiet for '+esc(ago(ini.changed).replace(" ago",""))+'</span>';
+  if(circles.length > 1) badges += '<span class="badge" style="background:var(--bridge);color:#2b1408">spans '+circles.length+' circles</span>';
+  const growth = c > ini.committedAtStart ? 'Up from ' + ini.committedAtStart + ' committed when it started.' :
+    c === ini.committedAtStart ? 'No new commitments since it started.' : 'Down from ' + ini.committedAtStart + ' committed when it started.';
+  const ids = JSON.stringify(iniMemberIds(ini)).replace(/"/g, "&quot;");
+  return '<div class="ini-card '+g+'"><span class="ini-name">'+esc(ini.name)+'</span>'+badges+
+    '<div class="ini-meta">Led by '+esc(lead.name)+' · started '+esc(ago(ini.started))+' · last change '+esc(ago(ini.changed))+'</div>'+
+    '<div class="who" style="margin-bottom:8px">'+esc(ini.what)+'</div>'+
+    '<div class="ini-row"><div class="ini-k">Who\'s involved</div><div>'+
+      '<div class="coal-bar" role="img" aria-label="'+c+' committed, '+k+' consulted, '+m+' met">'+
+        '<span style="width:'+pct(c)+';background:'+STATUS_COLOR.committed+'"></span><span style="width:'+pct(k)+';background:'+STATUS_COLOR.consulted+'"></span><span style="width:'+pct(m)+';background:'+STATUS_COLOR.met+'"></span></div>'+
+      c+' committed · '+k+' consulted · '+m+' met · '+conf+' of '+onEx.length+' on the exchange confirmed<br><span class="who">'+esc(growth)+'</span></div></div>'+
+    '<div class="ini-row"><div class="ini-k">What\'s stopping it</div><div>'+(ini.blockers.length ? esc(ini.blockers.map(k => BLOCKER_INFO[k].label).join("; ")) : 'Nothing right now')+'</div></div>'+
+    '<div class="ini-row"><div class="ini-k">What would help</div><div>'+iniNextStep(ini)+'</div></div>'+
+    '<button class="btn sm" onclick="focusOnMap('+ids+',\''+esc(ini.name.replace(/'/g,""))+'\')">Show on the map</button>'+
+    '<button class="btn sm" onclick="openById(\''+ini.lead+'\')">Open the lead\'s profile</button></div>';
+}
+const INI_GROUPS = [
+  {key:"first", title:"Needs a conversation first", why:"Something has to be settled before new people would help."},
+  {key:"ready", title:"Ready for introductions", why:"The next step is something the exchange may have."},
+  {key:"unsure", title:"Not sure what's stopping it", why:"Worth a conversation to name it."},
+  {key:"moving", title:"Moving", why:"Nothing is stopping the next step right now."}
+];
+function renderInitiatives(){
+  const byGroup = g => INITIATIVES.filter(x => iniGroup(x) === g);
+  const quiet = INITIATIVES.filter(x => x.changed >= QUIET_DAYS).length;
+  const spans = INITIATIVES.filter(x => iniCircles(x).length > 1).length;
+  const tiles = [[INITIATIVES.length,"Initiatives",""],[byGroup("first").length,"Need a conversation first",""],
+    [byGroup("ready").length,"Ready for introductions",""],[byGroup("unsure").length,"Not sure what's stopping it",""],
+    [byGroup("moving").length,"Moving",""],[quiet,"Quiet for 6+ weeks",""],[spans,"Span more than one circle",""]];
+  document.getElementById("iniStats").innerHTML = tiles.map(t => '<div class="stat"><div class="v">'+t[0]+'</div><div class="l">'+t[1]+'</div></div>').join("");
+  document.getElementById("iniGroups").innerHTML = INI_GROUPS.map(G => {
+    const list = byGroup(G.key).sort((a,b) => b.changed - a.changed);
+    if(!list.length) return "";
+    return '<div class="ini-group"><h3>'+G.title+' ('+list.length+')</h3><span class="why">'+G.why+'</span></div>' + list.map(iniCard).join("");
+  }).join("");
+  // Stretched thin: leads, committed, or consulted on three or more.
+  const load = new Map();
+  INITIATIVES.forEach(ini => {
+    const add = (id, role) => { if(!load.has(id)) load.set(id, []); load.get(id).push(role + " " + ini.name); };
+    add(ini.lead, "Leads");
+    ini.people.filter(p => p.id && p.status !== "met").forEach(p => add(p.id, p.status === "committed" ? "Committed to" : "Consulted on"));
+  });
+  const stretched = [...load.entries()].filter(([,v]) => v.length >= 3).sort((a,b) => b[1].length - a[1].length);
+  document.getElementById("iniStretched").innerHTML = stretched.length
+    ? stretched.map(([id, roles]) => '<div class="stretch"><b>'+esc(byId(id).name)+'</b> <span class="who">· '+roles.length+' initiatives</span><br>'+
+        '<span class="who">'+esc(roles.join("; "))+'</span><br><button class="btn sm" onclick="openById(\''+id+'\')">Open profile</button></div>').join("")
+    : '<p class="lede">Nobody is involved in three or more initiatives right now.</p>';
+}
+
+renderInitiatives(); renderGaps(); renderQuiet(); renderCommitments(); renderIntros(); siRenderTabs(); siRenderList(); renderRoster();
+</script>
+</body>
+</html>
